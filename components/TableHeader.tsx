@@ -2,7 +2,6 @@ import * as React from 'react'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
-import Checkbox from '@mui/material/Checkbox'
 import TableSortLabel from '@mui/material/TableSortLabel'
 import Box from '@mui/material/Box'
 import { visuallyHidden } from '@mui/utils'
@@ -10,10 +9,11 @@ import { visuallyHidden } from '@mui/utils'
 type Order = 'asc' | 'desc';
 
 export interface HeadCell<Data> {
-  disablePadding: boolean;
-  id: keyof Data;
-  label: string;
-  numeric: boolean;
+  disablePadding?: boolean;
+  id: keyof Data | 'delete';
+  label?: string;
+  numeric?: boolean;
+  action?: (row) => Promise<void>
 }
 
 interface Props<Data> {
@@ -25,7 +25,7 @@ interface Props<Data> {
 }
 
 export default function TableHeader<T extends Object>(props): React.ReactElement<Props<T>> {
-  const { header, order, orderBy, rowCount, onRequestSort } =
+  const { header, order, orderBy, onRequestSort } =
     props
   const createSortHandler =
     (property: keyof T) => (event: React.MouseEvent<unknown>) => {

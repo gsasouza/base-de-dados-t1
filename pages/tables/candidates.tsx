@@ -2,10 +2,12 @@ import Layout from '../../components/Layout'
 import Table from '../../components/Table'
 
 import * as React from 'react'
+import Router from 'next/router'
 import { HeadCell } from '../../components/TableHeader'
 import { GetServerSidePropsContext, NextPage } from 'next'
 import { ParsedUrlQuery } from 'querystring'
-import { selectAll } from '../../services/postgres'
+import { selectAll } from '../../services/database'
+import { deleteRow } from '../../services/api'
 
 interface Data {
   name: string;
@@ -26,6 +28,15 @@ const columns: readonly HeadCell<Data>[] = [
     disablePadding: false,
     label: 'Número',
   },
+  {
+    id: 'delete',
+    label: 'Deletar',
+    action: async (row: Data) => {
+      await deleteRow({ table: 'Candidate', property: 'name', value: row.name })
+      Router.reload()
+    },
+  },
+
 ]
 
 type Props = {
@@ -34,7 +45,6 @@ type Props = {
 }
 
 const Candidates: NextPage<Props> = ({ query, data }) => {
-  console.log(data)
   return (
     <Layout>
       <Table<Data> title="Candidatos" rows={data} columns={columns} filters={query}/>
@@ -48,9 +58,9 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
     fields: ['name', 'number'],
     table: 'Candidate',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
-    limit: rowsPerPage,
-    orderBy,
-    order,
+    limit: rowsPerPage as string,
+    orderBy: orderBy as string,
+    order: order as string,
   })
 
   return { props: { data, query } }

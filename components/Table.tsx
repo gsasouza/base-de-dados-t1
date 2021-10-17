@@ -10,6 +10,8 @@ import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import TableHeader, { HeadCell } from './TableHeader'
 import TableToolbar from './TableToolbar'
+import IconButton from '@mui/material/IconButton'
+import DeleteIcon from '@mui/icons-material/Delete'
 
 
 export interface TableFilter<T> {
@@ -107,13 +109,23 @@ function Table<T>({ title, rows, columns, filters }): React.ReactElement<Props<T
                     tabIndex={-1}
                     key={index}
                   >
-                    {columns.map(({ id }) => (
-                      <TableCell
-                        id={id}
-                      >
-                        {row[id]}
-                      </TableCell>
-                    ))}
+                    {columns.map(({ id, action }: { id: string, action: (row: T) => void}) =>
+                      id === 'delete' ? (
+                        <TableCell
+                          id={id + index}
+                        >
+                          <IconButton onClick={() => action(row)}>
+                            <DeleteIcon/>
+                          </IconButton>
+                        </TableCell>
+                      ) : (
+                        <TableCell
+                          id={id + index}
+                        >
+                          {row[id]}
+                        </TableCell>
+                      ),
+                    )}
                   </TableRow>
                 )
               })}

@@ -1,4 +1,5 @@
 module.exports = {
+  port: 3001,
   reactStrictMode: true,
   webpackDevMiddleware: config => {
     config.watchOptions = {

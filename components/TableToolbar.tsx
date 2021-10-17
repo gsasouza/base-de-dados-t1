@@ -2,9 +2,6 @@ import * as React from 'react'
 import Toolbar from '@mui/material/Toolbar'
 import { alpha } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
-import Tooltip from '@mui/material/Tooltip'
-import IconButton from '@mui/material/IconButton'
-import DeleteIcon from '@mui/icons-material/Delete'
 
 interface Props {
   title: string
@@ -27,13 +24,6 @@ const TableToolbar: React.FC<Props> = ({ title }) => {
       >
         {title}
       </Typography>
-      {/*{numSelected > 0 ? (*/}
-      {/*  <Tooltip title="Delete">*/}
-      {/*    <IconButton>*/}
-      {/*      <DeleteIcon/>*/}
-      {/*    </IconButton>*/}
-      {/*  </Tooltip>*/}
-      {/*) : null}*/}
     </Toolbar>
   )
 }
