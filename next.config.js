@@ -13,8 +13,8 @@ module.exports = {
     return [
       {
         source: '/',
-        destination: '/tables/candidates',
-        permanent: true,
+        destination: '/tables/candidatos',
+        permanent: false,
       },
     ]
   },

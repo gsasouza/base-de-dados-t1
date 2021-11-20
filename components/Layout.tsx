@@ -8,18 +8,18 @@ import List from '@mui/material/List'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import ListItem from '@mui/material/ListItem'
-import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
-import InboxIcon from '@mui/icons-material/MoveToInbox'
-import MailIcon from '@mui/icons-material/Mail'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 
 const DRAWER_WIDTH = 240
 
-const TABLES = ['Candidatos']
+const TABLES = ['Pessoas', 'Candidatos', 'Partidos', 'Programas_Partido', 'Cargos', 'Doadores_Campanha', 'Equipes_de_Apoio', 'Participantes_Equipe', 'Pleitos_Eleicao', 'Processos_Judiciais']
 
 const OTHERS = ['Candidaturas', 'Relatórios', 'Candidatos Ficha Limpa']
 
 const Layout: React.FC = ({ children }) => {
+  const router = useRouter()
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline/>
@@ -42,9 +42,11 @@ const Layout: React.FC = ({ children }) => {
         <Box sx={{ overflow: 'auto' }}>
           <List>
             {TABLES.map((text) => (
-              <ListItem button key={text}>
-                <ListItemText primary={text}/>
-              </ListItem>
+              <Link href={`/tables/${text.toLowerCase()}`} key={text}>
+                <ListItem button selected={router.pathname === `/tables/${text.toLowerCase()}`}>
+                  <ListItemText primary={text}/>
+                </ListItem>
+              </Link>
             ))}
           </List>
           <Divider/>

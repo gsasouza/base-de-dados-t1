@@ -10,29 +10,29 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  name: string;
-  number: number;
+  ID_Participante: number,
+  Funcao: string
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'name',
-    numeric: false,
+    id: 'ID_Participante',
+    numeric: true,
     disablePadding: true,
-    label: 'Nome',
+    label: 'ID_Participante',
   },
   {
-    id: 'number',
-    numeric: true,
+    id: 'Funcao',
+    numeric: false,
     disablePadding: false,
-    label: 'Número',
+    label: 'Funcao',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Candidate', property: 'name', value: row.name })
+      await deleteRow({ table: 'Participantes_Equipe', property: 'ID_Participante', value: row.ID_Participante })
       Router.reload()
     },
   },
@@ -44,10 +44,10 @@ type Props = {
   data: Data[]
 }
 
-const Candidates: NextPage<Props> = ({ query, data }) => {
+const Participantes_Equipe: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Candidatos" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Participantes Equipe" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -55,8 +55,8 @@ const Candidates: NextPage<Props> = ({ query, data }) => {
 export async function getServerSideProps({ req, query }: GetServerSidePropsContext) {
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
-    fields: ['name', 'number'],
-    table: 'Candidate',
+    fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
+    table: 'Participantes_Equipe',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -67,4 +67,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Candidates
+export default Participantes_Equipe
