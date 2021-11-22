@@ -16,7 +16,7 @@ const DRAWER_WIDTH = 240
 
 const TABLES = ['Pessoa', 'Candidato', 'Partido', 'Programa_Partido', 'Cargo', 'Candidatura', 'Doador_Campanha', 'Doacao_Candidatura', 'Equipe_Apoio', 'Apoiador_Campanha', 'Pleito', 'Processo_Judicial']
 
-const OTHERS = ['Candidaturas', 'Relatórios', 'Candidato Ficha Limpa']
+const OTHERS = [{ label: 'Candidaturas', path: '/candidaturas' }, { label: 'Relatórios', path: '/relatorio' }, { label: 'Pessoas Ficha Limpa', path: '/ficha-limpa'}]
 
 const Layout: React.FC = ({ children }) => {
   const router = useRouter()
@@ -51,10 +51,12 @@ const Layout: React.FC = ({ children }) => {
           </List>
           <Divider/>
           <List>
-            {OTHERS.map((text) => (
-              <ListItem button key={text}>
-                <ListItemText primary={text}/>
-              </ListItem>
+            {OTHERS.map(({ label, path}) => (
+              <Link href={path} key={path}>
+                <ListItem button selected={router.pathname === path}>
+                  <ListItemText primary={label}/>
+                </ListItem>
+              </Link>
             ))}
           </List>
         </Box>

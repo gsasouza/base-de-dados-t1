@@ -107,10 +107,10 @@ function Table<T>({ title, rows, columns, filters }): React.ReactElement<Props<T
                 return (
                   <TableRow
                     hover
-                    tabIndex={-1}
+                    tabIndex={- 1}
                     key={index}
                   >
-                    {columns.map(({ id, action }: { id: string, action: (row: T) => void}) =>
+                    {columns.map(({ id, action }: { id: string, action: (row: T) => void }) =>
                       id === 'delete' ? (
                         <TableCell
                           id={id + index}
@@ -155,5 +155,53 @@ function Table<T>({ title, rows, columns, filters }): React.ReactElement<Props<T
     </Box>
   )
 }
+
+export const TableBodySolo = ({ rows, columns }) => (
+  <Box sx={{ width: '100%' }}>
+    <Paper sx={{ width: '100%', mb: 2 }}>
+      <MUITable
+        sx={{ minWidth: 750 }}
+        aria-labelledby="tableTitle"
+        size={'medium'}
+      >
+        <TableHeader
+          header={columns}
+          onRequestSort={() => {
+          }}
+          rowCount={rows.length}
+        />
+        <TableBody>
+          {rows.map((row, index) => {
+            return (
+              <TableRow
+                hover
+                tabIndex={- 1}
+                key={index}
+              >
+                {columns.map(({ id, action }: { id: string, action: (row: any) => void }) =>
+                  id === 'delete' ? (
+                    <TableCell
+                      id={id + index}
+                    >
+                      <IconButton onClick={() => action(row)}>
+                        <DeleteIcon/>
+                      </IconButton>
+                    </TableCell>
+                  ) : (
+                    <TableCell
+                      id={id + index}
+                    >
+                      {row[id]}
+                    </TableCell>
+                  ),
+                )}
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </MUITable>
+    </Paper>
+  </Box>
+)
 
 export default Table

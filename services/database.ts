@@ -25,6 +25,18 @@ export const selectAll = async ({
                        FROM ${table} ${ordered};`)
 }
 
+type RawQueryArgs = {
+  query: string,
+  orderBy?: string,
+  order?: string
+}
+
+export const rawQuery = async ({ query, orderBy, order }: RawQueryArgs) => {
+  const ordered = orderBy ? `ORDER BY ${orderBy} ${order.toUpperCase()}` : ''
+
+  return await db.any(`${query} ${ordered};`);
+}
+
 type DeleteArgs = {
   table: string,
   property: string,
@@ -34,7 +46,8 @@ type DeleteArgs = {
 }
 
 export const deleteRowFromDatabase = async ({ table, property, value, property2, value2 }: DeleteArgs) => {
-  const and = property2 ? `AND ${property2} = '${value2}'` : '';
+  const and = property2 ? `
+}AND ${property2} = '${value2}'` : '';
   return db.none(`DELETE
                   FROM ${table}
                   WHERE ${property} = '${value}' ${and};`)

@@ -7,56 +7,57 @@ import Table from '../components/Table'
 import { HeadCell } from '../components/TableHeader'
 import { rawQuery } from "../services/database";
 
+
 interface Data {
+  cpf: string,
   nome: string,
-  ano_pleito: string,
-  nome_cargo: string,
-  cpf_candidato: string,
-  votos_recebidos: number
+  titulo_eleitor: number,
+  endereco: string,
+  escolaridade: string,
 }
+
 
 const columns: readonly HeadCell<Data>[] = [
   {
+    id: 'cpf',
+    numeric: true,
+    disablePadding: true,
+    label: 'CPF`',
+  },
+  {
+    id: 'titulo_eleitor',
+    numeric: false,
+    disablePadding: false,
+    label: 'Titulo Eleitor',
+  },
+  {
     id: 'nome',
     numeric: false,
-    disablePadding: true,
-    label: 'Nome Candidato',
+    disablePadding: false,
+    label: 'nome',
   },
   {
-    id: 'cpf_candidato',
+    id: 'endereco',
     numeric: false,
     disablePadding: false,
-    label: 'CPF',
-  },
-   {
-    id: 'ano_pleito',
-    numeric: false,
-    disablePadding: false,
-    label: 'Ano',
+    label: 'Endereco',
   },
   {
-    id: 'nome_cargo',
+    id: 'escolaridade',
     numeric: false,
     disablePadding: false,
-    label: 'Cargo',
-  },
-  {
-    id: 'votos_recebidos',
-    numeric: false,
-    disablePadding: false,
-    label: 'Votos Recebidos',
+    label: 'Escolaridade',
   },
 ]
-
 type Props = {
   query: ParsedUrlQuery,
   data: Data[]
 }
 
-const Candidaturas: NextPage<Props> = ({ query, data }) => {
+const FichaLimpa: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Candidaturas" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Pessoas com Ficha Limpa" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -65,7 +66,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { orderBy, order } = query
 
   const data = await rawQuery({
-    query: 'SELECT Cargo.Nome as Nome_Cargo, Ano_Pleito, CPF_Candidato, Candidatura_Pessoa.Nome, Votos_Recebidos FROM Cargo JOIN (SELECT * FROM Candidatura JOIN Pessoa ON Candidatura.CPF_Candidato = Pessoa.CPF) AS Candidatura_Pessoa ON Cargo.ID = Candidatura_Pessoa.ID_Cargo',
+    query: 'SELECT * FROM Pessoa WHERE Pessoa.CPF NOT IN (SELECT CPF_Reu FROM Processo_Judicial WHERE Procedente = TRUE AND Data_Fim BETWEEN CURRENT_DATE - INTERVAL \'5 YEARS\' AND CURRENT_DATE)',
     order: order as string,
     orderBy: orderBy as string
   })
@@ -74,4 +75,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Candidaturas
+export default FichaLimpa
