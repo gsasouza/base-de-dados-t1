@@ -10,43 +10,29 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  Cargo: number,
-  Ano_Pleito: Date
-  Local: string
-  Quantidade_Votos: number
+  ano: number
+  total_votos: number
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'Cargo',
+    id: 'ano',
     numeric: true,
     disablePadding: true,
-    label: 'Cargo',
+    label: 'Ano',
   },
   {
-    id: 'Ano_Pleito',
+    id: 'total_votos',
     numeric: false,
     disablePadding: false,
-    label: 'Ano_Pleito',
-  },
-  {
-    id: 'Local',
-    numeric: false,
-    disablePadding: false,
-    label: 'Local',
-  },
-  {
-    id: 'Quantidade_Votos',
-    numeric: true,
-    disablePadding: false,
-    label: 'Quantidade_Votos',
+    label: 'Total_Votos',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Pleitos_Eleicao', property: 'Ano_Pleito', value: row.Ano_Pleito })
+      await deleteRow({ table: 'Pleito', property: 'ano', value: row.ano })
       Router.reload()
     },
   },
@@ -58,10 +44,10 @@ type Props = {
   data: Data[]
 }
 
-const Pleitos_Eleicao: NextPage<Props> = ({ query, data }) => {
+const Pleito: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Pleitos Eleição" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Pleito" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -70,7 +56,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
     fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
-    table: 'Pleitos_Eleicao',
+    table: 'Pleito',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -81,4 +67,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Pleitos_Eleicao
+export default Pleito

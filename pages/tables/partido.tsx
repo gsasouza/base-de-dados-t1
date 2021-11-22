@@ -8,73 +8,53 @@ import { GetServerSidePropsContext, NextPage } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
+import { formatDate } from "../../services/date";
 
 interface Data {
-  ID_candidato: number,
-  Tit_eleitor: number,
-  CPF: number,
-  RG: number,
-  Nome_Candidato: string,
-  Data_Filiacao: Date,
-  Cod_Cargo: number,
-  Nro_Partido: number,
+  sigla: string,
+  nome: string,
+  cpf_presidente: string,
+  data_fundacao: Date,
+  id_programa: number,
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'ID_candidato',
-    numeric: true,
-    disablePadding: true,
-    label: 'ID_candidato',
-  },
-  {
-    id: 'Tit_eleitor',
-    numeric: true,
-    disablePadding: false,
-    label: 'Tit_eleitor',
-  },
-  {
-    id: 'CPF',
-    numeric: true,
-    disablePadding: false,
-    label: 'CPF',
-  },
-  {
-    id: 'RG',
-    numeric: true,
-    disablePadding: false,
-    label: 'RG',
-  },
-  {
-    id: 'Nome_Candidato',
+    id: 'sigla',
     numeric: false,
     disablePadding: false,
-    label: 'Nome_Candidato',
+    label: 'Sigla',
   },
   {
-    id: 'Data_Filiacao',
+    id: 'nome',
     numeric: false,
     disablePadding: false,
-    label: 'Nome_Candidato',
+    label: 'Nome',
   },
   {
-    id: 'Cod_Cargo',
-    numeric: true,
+    id: 'cpf_presidente',
+    numeric: false,
     disablePadding: false,
-    label: 'Cod_Cargo',
+    label: 'CPF_Presidente',
   },
   {
-    id: 'Nro_Partido',
-    numeric: true,
+    id: 'data_fundacao',
+    numeric: false,
     disablePadding: false,
-    label: 'Nro_Partido',
+    label: 'Data_Fundacao',
+  },
+  {
+    id: 'id_programa',
+    numeric: false,
+    disablePadding: false,
+    label: 'ID_Programa',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Candidatos', property: 'ID_candidato', value: row.ID_candidato })
+      await deleteRow({ table: 'Partido', property: 'sigla', value: row.sigla })
       Router.reload()
     },
   },
@@ -86,10 +66,10 @@ type Props = {
   data: Data[]
 }
 
-const Candidatos: NextPage<Props> = ({ query, data }) => {
+const Partido: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Candidatos" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Partido" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -97,16 +77,24 @@ const Candidatos: NextPage<Props> = ({ query, data }) => {
 export async function getServerSideProps({ req, query }: GetServerSidePropsContext) {
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
-    fields: ['ID_candidato', 'Tit_eleitor', 'CPF', 'RG', 'Nome_Candidato', 'Data_Filiacao', 'Cod_Cargo', 'Nro_Partido'],
-    table: 'Candidatos',
+    fields: ['Sigla', 'Nome', 'CPF_Presidente', 'Data_Fundacao', 'ID_Programa'],
+    table: 'Partido',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
     order: order as string,
   })
 
-  return { props: { data, query } }
+
+  return {
+    props: {
+      data: data.map(({ data_fundacao, ...rest }) => ({
+        ...rest,
+        data_fundacao: formatDate(data_fundacao)
+      })), query
+    }
+  }
 }
 
 
-export default Candidatos
+export default Partido

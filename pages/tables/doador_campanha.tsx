@@ -10,29 +10,36 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  ID_Participante: number,
-  Funcao: string
+  id: string,
+  cpf: string
+  cnpj: string
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'ID_Participante',
-    numeric: true,
+    id: 'id',
+    numeric: false,
     disablePadding: true,
-    label: 'ID_Participante',
+    label: 'ID',
   },
   {
-    id: 'Funcao',
+    id: 'cpf',
     numeric: false,
+    disablePadding: true,
+    label: 'CPF',
+  },
+  {
+    id: 'cnpj',
+    numeric: true,
     disablePadding: false,
-    label: 'Funcao',
+    label: 'CNPJ_Doador',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Participantes_Equipe', property: 'ID_Participante', value: row.ID_Participante })
+      await deleteRow({ table: 'Doador_campanha', property: 'id', value: row.id })
       Router.reload()
     },
   },
@@ -44,10 +51,10 @@ type Props = {
   data: Data[]
 }
 
-const Participantes_Equipe: NextPage<Props> = ({ query, data }) => {
+const Doador_campanha: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Participantes Equipe" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Doadores Campanha" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -56,7 +63,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
     fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
-    table: 'Participantes_Equipe',
+    table: 'Doador_Campanha',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -67,4 +74,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Participantes_Equipe
+export default Doador_campanha

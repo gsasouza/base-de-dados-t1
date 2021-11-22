@@ -8,59 +8,39 @@ import { GetServerSidePropsContext, NextPage } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
+import { formatDate } from "../../services/date";
 
 interface Data {
-  Nro_partido: number,
-  Sigla: string,
-  Nome: string,
-  Pres_Nacional: string,
-  Data_fund: Date,
-  Programa: number,
+  id: string,
+  conteudo: string
+  data_publicacao: string
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'Nro_partido',
+    id: 'id',
     numeric: true,
     disablePadding: true,
-    label: 'Nro_partido',
+    label: 'ID',
   },
   {
-    id: 'Sigla',
-    numeric: false,
+    id: 'conteudo',
+    numeric: true,
     disablePadding: false,
-    label: 'Sigla',
+    label: 'Conteudo',
   },
   {
-    id: 'Nome',
+    id: 'data_publicacao',
     numeric: false,
     disablePadding: false,
-    label: 'Nome',
-  },
-  {
-    id: 'Pres_Nacional',
-    numeric: false,
-    disablePadding: false,
-    label: 'Pres_Nacional',
-  },
-  {
-    id: 'Data_fund',
-    numeric: false,
-    disablePadding: false,
-    label: 'Data_fund',
-  },
-  {
-    id: 'Programa',
-    numeric: false,
-    disablePadding: false,
-    label: 'Nome_Candidato',
+    label: 'Data_Publicacao',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Partidos', property: 'Nro_partido', value: row.Nro_partido })
+      await deleteRow({ table: 'Programa_Partidoo', property: 'id', value: row.id })
       Router.reload()
     },
   },
@@ -72,10 +52,10 @@ type Props = {
   data: Data[]
 }
 
-const Partidos: NextPage<Props> = ({ query, data }) => {
+const Programa_partido: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Partidos" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Programas Partido" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -83,16 +63,23 @@ const Partidos: NextPage<Props> = ({ query, data }) => {
 export async function getServerSideProps({ req, query }: GetServerSidePropsContext) {
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
-    fields: ['Nro_partido', 'Sigla', 'Nome', 'Pres_Nacional', 'Data_fund', 'Programa'],
-    table: 'Partidos',
+    fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
+    table: 'Programa_Partido',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
     order: order as string,
   })
 
-  return { props: { data, query } }
+  return {
+    props: {
+      data: data.map(({ data_publicacao, ...rest }) => ({
+        ...rest,
+        data_publicacao: formatDate(data_publicacao)
+      })), query
+    }
+  }
 }
 
 
-export default Partidos
+export default Programa_partido

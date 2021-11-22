@@ -10,60 +10,61 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  Nro_Processo: number,
-  Autor: string,
-  Vara_Judicial: string
-  Data_inicio: Date
-  Status: string
-  Veredito: string
+  id: string,
+  nome: string,
+  cidade: string,
+  estado: string,
+  federacao: string,
+  quantidade_eleitos: number,
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'Nro_Processo',
+    id: 'id',
     numeric: true,
     disablePadding: true,
-    label: 'Nro_Processo',
+    label: 'ID',
   },
   {
-    id: 'Autor',
+    id: 'nome',
     numeric: false,
     disablePadding: false,
-    label: 'Autor',
+    label: 'Nome',
   },
   {
-    id: 'Vara_Judicial',
+    id: 'cidade',
     numeric: false,
     disablePadding: false,
-    label: 'Funcao',
+    label: 'Cidade',
   },
   {
-    id: 'Data_inicio',
+    id: 'estado',
     numeric: false,
     disablePadding: false,
-    label: 'Data_inicio',
+    label: 'Estado',
   },
   {
-    id: 'Status',
+    id: 'federacao',
     numeric: false,
     disablePadding: false,
-    label: 'Status',
+    label: 'Federacao',
   },
   {
-    id: 'Veredito',
+    id: 'quantidade_eleitos',
     numeric: false,
     disablePadding: false,
-    label: 'Veredito',
+    label: 'Quantidade_eleitos',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Processos_Judiciais', property: 'Nro_Processo', value: row.Nro_Processo })
+      await deleteRow({ table: 'Cargo', property: 'id', value: row.id })
       Router.reload()
     },
   },
+
 ]
 
 type Props = {
@@ -71,10 +72,11 @@ type Props = {
   data: Data[]
 }
 
-const Processos_Judiciais: NextPage<Props> = ({ query, data }) => {
+const Cargo: NextPage<Props> = ({ query, data }) => {
+  console.log(data)
   return (
     <Layout>
-      <Table<Data> title="Processos Judiciais" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Cargo" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -83,7 +85,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
     fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
-    table: 'Processos_Judiciais',
+    table: 'Cargo',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -94,4 +96,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Processos_Judiciais
+export default Cargo

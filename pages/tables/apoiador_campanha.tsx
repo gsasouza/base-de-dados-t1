@@ -10,50 +10,36 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  ID_Doador: number,
-  CNPJ_Doador: number
-  Nome_Doador: string
-  Valor: string
-  Data: Date
+  id_equipe_apoio: string,
+  cpf_apoiador: string,
+  id_candidatura: string
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'ID_Doador',
+    id: 'id_equipe_apoio',
     numeric: true,
     disablePadding: true,
-    label: 'ID_Doador',
+    label: 'ID_Equipe_Apoio',
   },
   {
-    id: 'CNPJ_Doador',
-    numeric: true,
-    disablePadding: false,
-    label: 'CNPJ_Doador',
-  },
-  {
-    id: 'Nome_Doador',
+    id: 'cpf_apoiador',
     numeric: false,
     disablePadding: false,
-    label: 'Nome_Doador',
+    label: 'CPF_Apoiador',
   },
   {
-    id: 'Valor',
-    numeric: true,
+    id: 'id_candidatura',
+    numeric: false,
     disablePadding: false,
-    label: 'Valor',
-  },
-  {
-    id: 'Data',
-    numeric: true,
-    disablePadding: false,
-    label: 'Data',
+    label: 'ID_Candidatura',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Doadores_Campanha', property: 'ID_Doador', value: row.ID_Doador })
+      await deleteRow({ table: 'Apoiador_campanha', property: 'id_equipe_apoio', value: row.id_equipe_apoio })
       Router.reload()
     },
   },
@@ -65,10 +51,10 @@ type Props = {
   data: Data[]
 }
 
-const Doadores_Campanha: NextPage<Props> = ({ query, data }) => {
+const Apoiador_campanha: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Doadores Campanha" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Apoiador_Campanha" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -77,7 +63,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
     fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
-    table: 'Doadores_Campanha',
+    table: 'Apoiador_campanha',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -88,4 +74,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Doadores_Campanha
+export default Apoiador_campanha

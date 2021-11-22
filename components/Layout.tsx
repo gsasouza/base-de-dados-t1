@@ -14,9 +14,9 @@ import { useRouter } from 'next/router'
 
 const DRAWER_WIDTH = 240
 
-const TABLES = ['Pessoas', 'Candidatos', 'Partidos', 'Programas_Partido', 'Cargos', 'Doadores_Campanha', 'Equipes_de_Apoio', 'Participantes_Equipe', 'Pleitos_Eleicao', 'Processos_Judiciais']
+const TABLES = ['Pessoa', 'Candidato', 'Partido', 'Programa_Partido', 'Cargo', 'Doador_Campanha', 'Equipe_Apoio', 'Apoiador_Campanha', 'Pleito', 'Processo_Judicial']
 
-const OTHERS = ['Candidaturas', 'Relatórios', 'Candidatos Ficha Limpa']
+const OTHERS = ['Candidaturas', 'Relatórios', 'Candidato Ficha Limpa']
 
 const Layout: React.FC = ({ children }) => {
   const router = useRouter()

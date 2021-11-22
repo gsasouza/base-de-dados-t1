@@ -10,36 +10,43 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  ID_Equipe: number,
-  Nome_equipe: string,
-  Funcao: string
+  id: string,
+  id_candidatura: string,
+  ano_pleito: string
+  objetivo: string
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'ID_Equipe',
+    id: 'id',
     numeric: true,
     disablePadding: true,
-    label: 'ID_Equipe',
+    label: 'ID',
   },
   {
-    id: 'Nome_equipe',
+    id: 'id_candidatura',
     numeric: false,
     disablePadding: false,
-    label: 'Nome_equipe',
+    label: 'ID_Candidatura',
   },
   {
-    id: 'Funcao',
+    id: 'ano_pleito',
     numeric: false,
     disablePadding: false,
-    label: 'Funcao',
+    label: 'Ano_Pleito',
+  },
+  {
+    id: 'objetivo',
+    numeric: false,
+    disablePadding: false,
+    label: 'Objetivo',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Equipes_de_apoio', property: 'ID_Equipe', value: row.ID_Equipe })
+      await deleteRow({ table: 'Equipe_Apoio', property: 'id', value: row.id })
       Router.reload()
     },
   },
@@ -51,10 +58,10 @@ type Props = {
   data: Data[]
 }
 
-const Equipes_de_Apoio: NextPage<Props> = ({ query, data }) => {
+const Equipe_apoio: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Equipes de Apoio" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Equipe_Apoio" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -63,7 +70,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
     fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
-    table: 'Equipes_de_Apoio',
+    table: 'Equipe_apoio',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -74,4 +81,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Equipes_de_Apoio
+export default Equipe_apoio

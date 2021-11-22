@@ -84,6 +84,7 @@ function Table<T>({ title, rows, columns, filters }): React.ReactElement<Props<T
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0
 
+  const pageRows = rows.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   return (
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
@@ -102,7 +103,7 @@ function Table<T>({ title, rows, columns, filters }): React.ReactElement<Props<T
               rowCount={rows.length}
             />
             <TableBody>
-              {rows.map((row, index) => {
+              {pageRows.map((row, index) => {
                 return (
                   <TableRow
                     hover
