@@ -73,7 +73,6 @@ type Props = {
 }
 
 const Cargo: NextPage<Props> = ({ query, data }) => {
-  console.log(data)
   return (
     <Layout>
       <Table<Data> title="Cargo" rows={data} columns={columns} filters={query}/>

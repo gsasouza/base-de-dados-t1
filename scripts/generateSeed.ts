@@ -131,11 +131,11 @@ class Candidatura {
     this.CPF_Vice = cpf_vice;
     this.Ano_Pleito = ano_pleito;
     this.ID_Cargo = cargo;
-    this.Votos_Recebidos = 0
+    this.Votos_Recebidos = Faker.datatype.number(1000)
   }
 
   toSQL = () => `INSERT INTO Candidatura
-                 VALUES ('${this.ID}', '${this.CPF_Candidato}', ${this.CPF_Vice ? `' ${this.CPF_Vice}'` : 'NULL'},
+                 VALUES ('${this.ID}', '${this.CPF_Candidato}', ${this.CPF_Vice ? `'${this.CPF_Vice}'` : 'NULL'},
                          ${this.Ano_Pleito},
                          '${this.ID_Cargo}',
                          ${this.Votos_Recebidos});`
@@ -278,7 +278,7 @@ const candidaturas = candidatos.map(candidato => {
     vice = new Candidato(partidos[Faker.datatype.number(partidos.length - 1)].Sigla, uniqueVices().CPF);
     candidatos.push(vice);
   }
-  return new Candidatura(candidato.CPF_Candidato, vice ? vice.CPF : null, Faker.random.arrayElement(pleitos).Ano, cargo.ID);
+  return new Candidatura(candidato.CPF_Candidato, vice ? vice.CPF_Candidato : null, Faker.random.arrayElement(pleitos).Ano, cargo.ID);
 })
 
 const equipes_apoio = Array.from(Array(100)).map(_ => new EquipeApoio(Faker.random.arrayElement(candidaturas).ID, Faker.random.arrayElement(pleitos).Ano))

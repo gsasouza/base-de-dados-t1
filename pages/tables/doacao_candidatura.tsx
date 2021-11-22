@@ -10,36 +10,42 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  id: string,
-  cpf: string
-  cnpj: string
+  id_doador: string,
+  id_candidatura: string
+  valor: string
 }
 
 
 const columns: readonly HeadCell<Data>[] = [
   {
-    id: 'id',
+    id: 'id_doador',
     numeric: false,
     disablePadding: true,
-    label: 'ID',
+    label: 'ID_Doador',
   },
   {
-    id: 'cpf',
+    id: 'id_candidatura',
     numeric: false,
     disablePadding: true,
-    label: 'CPF',
+    label: 'ID_Candidatura',
   },
   {
-    id: 'cnpj',
+    id: 'valor',
     numeric: true,
     disablePadding: false,
-    label: 'CNPJ_Doador',
+    label: 'Valor',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Doador_campanha', property: 'id', value: row.id })
+      await deleteRow({
+        table: 'Doacao_candidatura',
+        property: 'id_doador',
+        value: row.id_doador,
+        property2: 'id_candidatura',
+        value2: row.id_candidatura
+    })
       Router.reload()
     },
   },
@@ -51,10 +57,10 @@ type Props = {
   data: Data[]
 }
 
-const Doador_campanha: NextPage<Props> = ({ query, data }) => {
+const Doacao_candidatura: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Doador Campanha" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Doacao_Candidautra" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -63,7 +69,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
     fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
-    table: 'Doador_Campanha',
+    table: 'Doacao_candidatura',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -74,4 +80,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Doador_campanha
+export default Doacao_candidatura

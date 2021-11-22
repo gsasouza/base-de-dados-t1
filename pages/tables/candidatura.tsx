@@ -10,11 +10,13 @@ import { selectAll } from '../../services/database'
 import { deleteRow } from '../../services/api'
 
 interface Data {
-  id: string,
-  cpf: string
-  cnpj: string
+  id: string
+  cpf_candidato: string,
+  cpf_vice: string,
+  ano_pleito: string,
+  id_cargo: string,
+  votos_recebidos: string,
 }
-
 
 const columns: readonly HeadCell<Data>[] = [
   {
@@ -24,22 +26,40 @@ const columns: readonly HeadCell<Data>[] = [
     label: 'ID',
   },
   {
-    id: 'cpf',
+    id: 'cpf_candidato',
     numeric: false,
     disablePadding: true,
-    label: 'CPF',
+    label: 'CPF_Candidato',
   },
   {
-    id: 'cnpj',
-    numeric: true,
-    disablePadding: false,
-    label: 'CNPJ_Doador',
+    id: 'cpf_vice',
+    numeric: false,
+    disablePadding: true,
+    label: 'CPF_Vice',
+  },
+  {
+    id: 'ano_pleito',
+    numeric: false,
+    disablePadding: true,
+    label: 'ano_pleito',
+  },
+  {
+    id: 'id_cargo',
+    numeric: false,
+    disablePadding: true,
+    label: 'ID_Cargo',
+  },
+  {
+    id: 'votos_recebidos',
+    numeric: false,
+    disablePadding: true,
+    label: 'Votos_Recebidos',
   },
   {
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Doador_campanha', property: 'id', value: row.id })
+      await deleteRow({ table: 'Candidatura', property: 'id', value: row.id })
       Router.reload()
     },
   },
@@ -51,10 +71,10 @@ type Props = {
   data: Data[]
 }
 
-const Doador_campanha: NextPage<Props> = ({ query, data }) => {
+const Candidatura: NextPage<Props> = ({ query, data }) => {
   return (
     <Layout>
-      <Table<Data> title="Doador Campanha" rows={data} columns={columns} filters={query}/>
+      <Table<Data> title="Candidatura" rows={data} columns={columns} filters={query}/>
     </Layout>
   )
 }
@@ -63,7 +83,7 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
   const { rowsPerPage = '10', page = '0', orderBy, order } = query
   const data = await selectAll({
     fields: columns.map(({ id }) => id).filter(id => id !== 'delete'),
-    table: 'Doador_Campanha',
+    table: 'Candidatura',
     offset: Number.parseInt(rowsPerPage as string, 10) * Number.parseInt(page as string, 10),
     limit: rowsPerPage as string,
     orderBy: orderBy as string,
@@ -74,4 +94,4 @@ export async function getServerSideProps({ req, query }: GetServerSidePropsConte
 }
 
 
-export default Doador_campanha
+export default Candidatura

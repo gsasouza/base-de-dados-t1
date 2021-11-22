@@ -73,7 +73,7 @@ CREATE TABLE Candidatura
     ID              VARCHAR(255) UNIQUE NOT NULL,
     CPF_Candidato   VARCHAR(11)         NOT NULL,
     CPF_Vice        VARCHAR(11)                  DEFAULT NULL,
-    Ano_Pleito      INT                 NOT NULL,
+    ano_pleito      INT                 NOT NULL,
     ID_Cargo        VARCHAR(255)        NOT NULL,
     Votos_Recebidos INT                 NOT NULL DEFAULT 0,
 
@@ -215,7 +215,7 @@ BEGIN
         RAISE EXCEPTION 'Candidato não é ficha limpa';
     END IF;
 
-    IF (NEW.CPF_VICE <> NULL AND nro_processos_culpado_candidato > 0) THEN
+    IF (NEW.CPF_VICE IS NOT NULL AND nro_processos_culpado_candidato > 0) THEN
         RAISE EXCEPTION 'Vice-Candidato não é ficha limpa';
     END IF;
 
@@ -287,11 +287,11 @@ EXECUTE PROCEDURE valida_apoiador_campanha();
 CREATE OR REPLACE FUNCTION valida_doador_documento() RETURNS trigger AS
 $valida_doador_documento$
 BEGIN
-    IF (NEW.CPF = NULL AND NEW.CNPJ = NULL) THEN
+    IF (NEW.CPF IS NOT NULL AND NEW.CNPJ IS NOT NULL) THEN
         RAISE EXCEPTION 'Um doador deve ser uma empresa ou um indivíduo';
     END IF;
 
-    IF (NEW.CPF <> NULL AND NEW.CNPJ <> NULL) THEN
+    IF (NEW.CPF IS NOT NULL AND NEW.CNPJ IS NOT NULL) THEN
         RAISE EXCEPTION 'Um doador não pode ter cpf e cnpj ao mesmo tempo';
     END IF;
 
@@ -315,7 +315,7 @@ BEGIN
     INTO nro_doacao_candidatura
     FROM Doacao_Candidatura
     WHERE ID_Candidatura = NEW.ID_Candidatura
-      AND ID_Doador = NEW.ID_Doador;
+    AND ID_Doador = NEW.ID_Doador;
 
     IF (nro_doacao_candidatura > 0) THEN
         RAISE EXCEPTION 'Uma empresa pode doar apenas uma vez por candidatura';
@@ -344,7 +344,7 @@ BEGIN
 END;
 $atualiza_votos_pleito$ LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_DOADOR_EMPRESA
-    AFTER INSERT OR UPDATE
+    AFTER INSERT OR UPDATE OR DELETE
     ON Candidatura
     FOR EACH ROW
 EXECUTE PROCEDURE atualiza_votos_pleito();

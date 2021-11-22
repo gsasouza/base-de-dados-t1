@@ -45,7 +45,6 @@ type Props = {
 }
 
 const Candidato: NextPage<Props> = ({ query, data }) => {
-  console.log(data)
   return (
     <Layout>
       <Table<Data> title="Candidato" rows={data} columns={columns} filters={query}/>

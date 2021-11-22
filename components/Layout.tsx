@@ -14,7 +14,7 @@ import { useRouter } from 'next/router'
 
 const DRAWER_WIDTH = 240
 
-const TABLES = ['Pessoa', 'Candidato', 'Partido', 'Programa_Partido', 'Cargo', 'Doador_Campanha', 'Equipe_Apoio', 'Apoiador_Campanha', 'Pleito', 'Processo_Judicial']
+const TABLES = ['Pessoa', 'Candidato', 'Partido', 'Programa_Partido', 'Cargo', 'Candidatura', 'Doador_Campanha', 'Doacao_Candidatura', 'Equipe_Apoio', 'Apoiador_Campanha', 'Pleito', 'Processo_Judicial']
 
 const OTHERS = ['Candidaturas', 'Relatórios', 'Candidato Ficha Limpa']
 
