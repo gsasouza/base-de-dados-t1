@@ -15,7 +15,6 @@ interface Data {
   id_candidatura: string
 }
 
-
 const columns: readonly HeadCell<Data>[] = [
   {
     id: 'id_equipe_apoio',

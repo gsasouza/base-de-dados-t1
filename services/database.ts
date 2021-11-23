@@ -12,8 +12,6 @@ type SelectAllArgs = {
 export const selectAll = async ({
                                   fields,
                                   table,
-                                  offset,
-                                  limit,
                                   orderBy,
                                   order,
                                 }: SelectAllArgs) => {

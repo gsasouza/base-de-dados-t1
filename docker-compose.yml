@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./dev-seed.sql:/docker-entrypoint-initdb.d/seed.sql
+      - ./dev-seed.sql:/docker-entrypoint-initdb.d/dev-seed.sql
 
   nextjs:
     ports:
