@@ -13,20 +13,20 @@ services:
     volumes:
       - ./dev-seed.sql:/docker-entrypoint-initdb.d/seed.sql
 
-#  nextjs:
-#    ports:
-#      - 3000:3000
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    volumes:
-#      - .:/usr/src/app
-#      - /usr/src/app/node_modules
-#      - /usr/src/app/.next
-#    env_file:
-#      - .env
-#    depends_on:
-#      - postgres
+  nextjs:
+    ports:
+      - 3000:3000
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/.next
+    env_file:
+      - .env
+    depends_on:
+      - postgres
 
   pgadmin-compose:
     image: dpage/pgadmin4

@@ -3,7 +3,7 @@ import { GetServerSidePropsContext, NextPage } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 
 import Layout from '../components/Layout'
-import Table, { TableBodySolo } from '../components/Table'
+import { TableBodySolo } from '../components/Table'
 import { HeadCell } from '../components/TableHeader'
 import { rawQuery } from "../services/database";
 import Typography from "@mui/material/Typography";
@@ -13,7 +13,8 @@ interface Data {
   ano_pleito: string,
   cargo: string,
   nome_candidato: string,
-  votos_recebidos: number
+  votos_recebidos: number,
+  eleito: string
 }
 
 const columns: readonly HeadCell<Data>[] = [
@@ -80,9 +81,10 @@ const orderCargo = ['Presidente', 'Governador', 'Deputado Federal', 'Deputado Es
 
 const Candidaturas: NextPage<Props> = ({ query, data }) => {
 
+  console.log(orderByCargo(groupByYear(data)))
   return (
     <Layout>
-      {Object.entries(orderByCargo(groupByYear(data))).reverse().map(([ano, cargos]) => (
+      {Object.entries(orderByCargo(groupByYear(data))).reverse().map(([ano, cargos]) => Object.keys(cargos).length ? (
           <>
             <Typography
               sx={{ flex: '1 1 100%', marginBottom: '2rem' }}
@@ -92,7 +94,7 @@ const Candidaturas: NextPage<Props> = ({ query, data }) => {
             >
               Pleito de {ano}
             </Typography>
-            {orderCargo.map(cargo => (
+            {orderCargo.map(cargo => cargos[cargo] ? (
               <>
                 <Typography
                   sx={{ flex: '1 1 100%', marginBottom: '2rem' }}
@@ -114,9 +116,9 @@ const Candidaturas: NextPage<Props> = ({ query, data }) => {
 
               </>
 
-            ))}
+            ) : null)}
           </>
-        )
+        ) : null
       )}
     </Layout>
   )

@@ -34,8 +34,8 @@ CREATE TABLE Partido
     ID_Programa    VARCHAR            NOT NULL,
 
     CONSTRAINT PK_SIGLA PRIMARY KEY (Sigla),
-    CONSTRAINT FK_PRESIDENTE FOREIGN KEY (CPF_Presidente) REFERENCES Pessoa (CPF),
-    CONSTRAINT FK_PROGRAMA FOREIGN KEY (ID_Programa) REFERENCES Programa_Partido (ID)
+    CONSTRAINT FK_PRESIDENTE FOREIGN KEY (CPF_Presidente) REFERENCES Pessoa (CPF) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_PROGRAMA FOREIGN KEY (ID_Programa) REFERENCES Programa_Partido (ID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Candidato
@@ -44,8 +44,8 @@ CREATE TABLE Candidato
     Sigla_Partido VARCHAR(8)  NOT NULL,
 
     CONSTRAINT PK_CANDIDATO PRIMARY KEY (CPF_Candidato, Sigla_Partido),
-    CONSTRAINT FK_SIGLA_PARTIDO FOREIGN KEY (Sigla_Partido) REFERENCES Partido (Sigla),
-    CONSTRAINT FK_CPF_CANDIDATO FOREIGN KEY (CPF_Candidato) REFERENCES Pessoa (CPF)
+    CONSTRAINT FK_SIGLA_PARTIDO FOREIGN KEY (Sigla_Partido) REFERENCES Partido (Sigla) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_CPF_CANDIDATO FOREIGN KEY (CPF_Candidato) REFERENCES Pessoa (CPF) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Cargo
@@ -78,10 +78,10 @@ CREATE TABLE Candidatura
     Votos_Recebidos INT                 NOT NULL DEFAULT 0,
 
     CONSTRAINT PK_CANDIDATURA PRIMARY KEY (ID),
-    CONSTRAINT FK_CPF_CANDIDATO FOREIGN KEY (CPF_Candidato) REFERENCES Pessoa (CPF),
-    CONSTRAINT FK_CPF_VICE FOREIGN KEY (CPF_Vice) REFERENCES Pessoa (CPF),
-    CONSTRAINT FK_PLEITO FOREIGN KEY (Ano_Pleito) REFERENCES Pleito (Ano),
-    CONSTRAINT FK_CARGO FOREIGN KEY (ID_Cargo) REFERENCES Cargo (ID)
+    CONSTRAINT FK_CPF_CANDIDATO FOREIGN KEY (CPF_Candidato) REFERENCES Pessoa (CPF) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_CPF_VICE FOREIGN KEY (CPF_Vice) REFERENCES Pessoa (CPF) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_PLEITO FOREIGN KEY (Ano_Pleito) REFERENCES Pleito (Ano) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_CARGO FOREIGN KEY (ID_Cargo) REFERENCES Cargo (ID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Equipe_Apoio
@@ -92,16 +92,18 @@ CREATE TABLE Equipe_Apoio
     Objetivo       VARCHAR(255) NOT NULL,
 
     CONSTRAINT PK_EQUIPE_APOIO PRIMARY KEY (ID),
-    CONSTRAINT FK_CANDIDATURA FOREIGN KEY (ID_Candidatura) REFERENCES Candidatura (ID)
+    CONSTRAINT FK_CANDIDATURA FOREIGN KEY (ID_Candidatura) REFERENCES Candidatura (ID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Apoiador_Campanha
 (
     ID_Equipe_Apoio VARCHAR(255) NOT NULL,
-    CPF_Apoiador    VARCHAR(11)   NOT NULL,
+    CPF_Apoiador    VARCHAR(11)  NOT NULL,
     ID_Candidatura  VARCHAR(255) NOT NULL,
     CONSTRAINT PK_APOIADOR_CAMPANHA PRIMARY KEY (CPF_Apoiador, ID_Equipe_Apoio),
-    CONSTRAINT FK_EQUIPE_APOIO FOREIGN KEY (ID_Equipe_Apoio) REFERENCES Equipe_Apoio (ID)
+    CONSTRAINT FK_EQUIPE_APOIO FOREIGN KEY (ID_Equipe_Apoio) REFERENCES Equipe_Apoio (ID) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_CPF_APOIADOR FOREIGN KEY (CPF_Apoiador) REFERENCES Pessoa(CPF) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_CPF_APOIADOR FOREIGN KEY (ID_Candidatura) REFERENCES Candidatura(ID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Doador_Campanha
@@ -110,7 +112,8 @@ CREATE TABLE Doador_Campanha
     CPF  VARCHAR(11),
     CNPJ VARCHAR(14),
 
-    CONSTRAINT PK_DOADOR_CAMPANHA PRIMARY KEY (ID)
+    CONSTRAINT PK_DOADOR_CAMPANHA PRIMARY KEY (ID),
+    CONSTRAINT FK_CPF_DOADOR FOREIGN KEY (CPF) REFERENCES Pessoa(CPF) ON DELETE CASCADE ON UPDATE CASCADE,
 );
 
 CREATE TABLE Doacao_Candidatura
@@ -120,9 +123,8 @@ CREATE TABLE Doacao_Candidatura
     Valor          INT          NOT NULL,
 
     CONSTRAINT PK_DOACAO_CANDIDATURA PRIMARY KEY (ID_Candidatura, ID_Doador),
-    CONSTRAINT FK_CANDIDATURA FOREIGN KEY (ID_Candidatura) REFERENCES Candidatura (ID),
-    CONSTRAINT FK_DOADOR_CAMPANHA FOREIGN KEY (ID_Doador) REFERENCES Doador_Campanha (ID)
-
+    CONSTRAINT FK_CANDIDATURA FOREIGN KEY (ID_Candidatura) REFERENCES Candidatura (ID) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_DOADOR_CAMPANHA FOREIGN KEY (ID_Doador) REFERENCES Doador_Campanha (ID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Processo_Judicial
@@ -131,10 +133,10 @@ CREATE TABLE Processo_Judicial
     Data_Inicio DATE         NOT NULL,
     Data_Fim    DATE,
     Procedente  BOOLEAN,
-    CPF_Reu     VARCHAR(11)   NOT NULL,
+    CPF_Reu     VARCHAR(11)  NOT NULL,
 
     CONSTRAINT PK_PROCESS_JUDICIAL PRIMARY KEY (ID),
-    CONSTRAINT FK_CPF_REU FOREIGN KEY (CPF_Reu) REFERENCES Pessoa (CPF)
+    CONSTRAINT FK_CPF_REU FOREIGN KEY (CPF_Reu) REFERENCES Pessoa (CPF) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 --- FIM DDL ---
@@ -142,7 +144,8 @@ CREATE TABLE Processo_Judicial
 
 -- Valida se o candidato já existe com partido diferente
 
-CREATE OR REPLACE FUNCTION valida_candidato() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION valida_candidato() RETURNS trigger AS
 $valida_candidato$
 DECLARE
 candidatos_partido INTEGER;
@@ -152,22 +155,26 @@ INTO candidatos_partido
 FROM Candidato
 WHERE CPF_Candidato = NEW.CPF_Candidato;
 
-IF (candidatos_partido > 0) THEN
+IF
+(candidatos_partido > 0) THEN
         RAISE EXCEPTION 'O Candidato já está cadastrado';
 END IF;
 
 RETURN NEW;
 END;
-$valida_candidato$ LANGUAGE plpgsql;
+$valida_candidato$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_CANDIDATo
-    BEFORE INSERT OR UPDATE
-                         ON Candidato
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE valida_candidato();
+    BEFORE INSERT OR
+UPDATE
+    ON Candidato
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_candidato();
 
 
 --- VALIDA SE O CANDIDATO JÁ ESTÁ CADASTRADO NO PLEITO DO ANO
-CREATE OR REPLACE FUNCTION valida_candidatura() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION valida_candidatura() RETURNS trigger AS
 $valida_candidatura$
 DECLARE
 candidaturas_ano INTEGER;
@@ -177,84 +184,132 @@ INTO candidaturas_ano
 FROM Candidatura
 WHERE CPF_Candidato = NEW.CPF_Candidato
   AND Ano_Pleito = NEW.Ano_Pleito;
-IF (candidaturas_ano > 0) THEN
+IF
+(candidaturas_ano > 0) THEN
         RAISE EXCEPTION 'O Candidato já está cadastrado no pleito desse ano';
 END IF;
 
 RETURN NEW;
 END;
-$valida_candidatura$ LANGUAGE plpgsql;
+$valida_candidatura$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_CANDIDATURA
-    BEFORE INSERT OR UPDATE
-                         ON Candidatura
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE valida_candidatura();
+    BEFORE INSERT OR
+UPDATE
+    ON Candidatura
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_candidatura();
+
+
+--- Valida se a pessoa é um candidato
+CREATE
+OR REPLACE FUNCTION valida_candidatura_candidato() RETURNS trigger AS
+$valida_candidatura_candidato$
+DECLARE
+candidato INTEGER;
+BEGIN
+SELECT COUNT(*)
+INTO candidato
+FROM Pessoa
+WHERE CPF = NEW.CPF_Candidato;
+IF
+(candidato = 0) THEN
+        RAISE EXCEPTION 'A Pessoa precisa ser um candidato';
+END IF;
+
+RETURN NEW;
+END;
+$valida_candidatura_candidato$
+LANGUAGE plpgsql;
+CREATE TRIGGER VALIDA_CANDIDATURA_CANDIDATO
+    BEFORE INSERT OR
+UPDATE
+    ON Candidatura
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_candidatura_candidato();
 
 -- Valida se o candidato é ficha limpa
-CREATE OR REPLACE FUNCTION valida_candidatura_ficha_limpa() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION valida_candidatura_ficha_limpa() RETURNS trigger AS
 $valida_candidatura_ficha_limpa$
 DECLARE
 nro_processos_culpado_candidato INTEGER;
-    nro_processos_culpado_vice      INTEGER;
+    nro_processos_culpado_vice
+INTEGER;
 BEGIN
 SELECT COUNT(*)
 INTO nro_processos_culpado_candidato
 FROM Processo_Judicial
 WHERE CPF_Reu = NEW.CPF_Candidato
   AND Procedente = TRUE
-  AND Data_Fim BETWEEN CURRENT_DATE - INTERVAL '5 YEARS' AND CURRENT_DATE;
+  AND Data_Fim BETWEEN CURRENT_DATE - INTERVAL '5 YEARS'
+  AND CURRENT_DATE;
 
 SELECT COUNT(*)
 INTO nro_processos_culpado_vice
 FROM Processo_Judicial
 WHERE CPF_Reu = NEW.CPF_Vice
   AND Procedente = TRUE
-  AND Data_Fim BETWEEN CURRENT_DATE - INTERVAL '5 YEARS' AND CURRENT_DATE;
+  AND Data_Fim BETWEEN CURRENT_DATE - INTERVAL '5 YEARS'
+  AND CURRENT_DATE;
 
-IF (nro_processos_culpado_candidato > 0) THEN
+IF
+(nro_processos_culpado_candidato > 0) THEN
         RAISE EXCEPTION 'Candidato não é ficha limpa';
 END IF;
 
-    IF (NEW.CPF_VICE IS NOT NULL AND nro_processos_culpado_candidato > 0) THEN
+    IF
+(NEW.CPF_VICE IS NOT NULL AND nro_processos_culpado_candidato > 0) THEN
         RAISE EXCEPTION 'Vice-Candidato não é ficha limpa';
 END IF;
 
 RETURN NEW;
 END;
-$valida_candidatura_ficha_limpa$ LANGUAGE plpgsql;
+$valida_candidatura_ficha_limpa$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_CANDIDATURA_FICHA_LIMPA
-    BEFORE INSERT OR UPDATE
-                         ON Candidatura
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE valida_candidatura_ficha_limpa();
+    BEFORE INSERT OR
+UPDATE
+    ON Candidatura
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_candidatura_ficha_limpa();
 
 -- Valida se o cargo tem uma cidade, estado ou federação
-CREATE OR REPLACE FUNCTION valida_cargo() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION valida_cargo() RETURNS trigger AS
 $valida_cargo$
 BEGIN
-    IF (NEW.Cidade IS NOT NULL) THEN
+    IF
+(NEW.Cidade IS NOT NULL) THEN
         RETURN NEW;
-    ELSEIF (NEW.Estado IS NOT NULL) THEN
+    ELSEIF
+(NEW.Estado IS NOT NULL) THEN
         RETURN NEW;
-    ELSEIF (NEW.Federacao IS NOT NULL) THEN
+    ELSEIF
+(NEW.Federacao IS NOT NULL) THEN
         RETURN NEW;
 END IF;
-    RAISE EXCEPTION 'Um cargo deve estar associado a uma cidade, estado ou federeção';
+    RAISE
+EXCEPTION 'Um cargo deve estar associado a uma cidade, estado ou federeção';
 END;
-$valida_cargo$ LANGUAGE plpgsql;
+$valida_cargo$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_CARGO
-    BEFORE INSERT OR UPDATE
-                         ON Cargo
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE valida_cargo();
+    BEFORE INSERT OR
+UPDATE
+    ON Cargo
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_cargo();
 
 -- Valida se o indivíduo já está apoiando alguma campanha no memsmo ano
 
-CREATE OR REPLACE FUNCTION valida_apoiador_campanha() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION valida_apoiador_campanha() RETURNS trigger AS
 $valida_apoiador_campanha$
 DECLARE
 nro_campanhas_ano  INTEGER;
-    ano_campanha_atual INTEGER;
+    ano_campanha_atual
+INTEGER;
 BEGIN
 SELECT Ano_Pleito
 INTO ano_campanha_atual
@@ -269,44 +324,53 @@ WHERE CPF_Apoiador = NEW.CPF_Apoiador
   AND Ano_Pleito = ano_campanha_atual;
 
 
-IF (nro_campanhas_ano > 0) THEN
+IF
+(nro_campanhas_ano > 0) THEN
         RAISE EXCEPTION 'Indivíduo só pode apoiar uma campanha por ano';
 END IF;
 
 RETURN NEW;
 END;
-$valida_apoiador_campanha$ LANGUAGE plpgsql;
+$valida_apoiador_campanha$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_APOIADOR_CAMPANHA
-    BEFORE INSERT OR UPDATE
-                         ON Apoiador_Campanha
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE valida_apoiador_campanha();
+    BEFORE INSERT OR
+UPDATE
+    ON Apoiador_Campanha
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_apoiador_campanha();
 
 -- Valida documento do doador
 
-CREATE OR REPLACE FUNCTION valida_doador_documento() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION valida_doador_documento() RETURNS trigger AS
 $valida_doador_documento$
 BEGIN
-    IF (NEW.CPF IS NOT NULL AND NEW.CNPJ IS NOT NULL) THEN
+    IF
+(NEW.CPF IS NOT NULL AND NEW.CNPJ IS NOT NULL) THEN
         RAISE EXCEPTION 'Um doador deve ser uma empresa ou um indivíduo';
 END IF;
 
-    IF (NEW.CPF IS NOT NULL AND NEW.CNPJ IS NOT NULL) THEN
+    IF
+(NEW.CPF IS NOT NULL AND NEW.CNPJ IS NOT NULL) THEN
         RAISE EXCEPTION 'Um doador não pode ter cpf e cnpj ao mesmo tempo';
 END IF;
 
 RETURN NEW;
 END;
-$valida_doador_documento$ LANGUAGE plpgsql;
+$valida_doador_documento$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_DOACAO_DOCUMENTO
-    BEFORE INSERT OR UPDATE
-                         ON Doador_Campanha
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE valida_doador_documento();
+    BEFORE INSERT OR
+UPDATE
+    ON Doador_Campanha
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_doador_documento();
 
 -- Valida numero de doação de empresas
 
-CREATE OR REPLACE FUNCTION valida_doacao_empresa() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION valida_doacao_empresa() RETURNS trigger AS
 $valida_doacao_empresa$
 DECLARE
 nro_doacao_candidatura INTEGER;
@@ -317,40 +381,49 @@ FROM Doacao_Candidatura
 WHERE ID_Candidatura = NEW.ID_Candidatura
   AND ID_Doador = NEW.ID_Doador;
 
-IF (nro_doacao_candidatura > 0) THEN
+IF
+(nro_doacao_candidatura > 0) THEN
         RAISE EXCEPTION 'Uma empresa pode doar apenas uma vez por candidatura';
 END IF;
 RETURN NEW;
 END;
-$valida_doacao_empresa$ LANGUAGE plpgsql;
+$valida_doacao_empresa$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_DOADOR_EMPRESA
-    BEFORE INSERT OR UPDATE
-                         ON Doacao_Candidatura
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE valida_doacao_empresa();
+    BEFORE INSERT OR
+UPDATE
+    ON Doacao_Candidatura
+    FOR EACH ROW
+    EXECUTE PROCEDURE valida_doacao_empresa();
 
 -- Atualiza total de votos do pleito
 
-CREATE OR REPLACE FUNCTION atualiza_votos_pleito() RETURNS trigger AS
+CREATE
+OR REPLACE FUNCTION atualiza_votos_pleito() RETURNS trigger AS
 $atualiza_votos_pleito$
 DECLARE
 nro_votos_pleito INTEGER;
 BEGIN
-SELECT SUM(Votos_Recebidos) INTO nro_votos_pleito FROM Candidatura WHERE Ano_Pleito = NEW.Ano_Pleito;
+SELECT SUM(Votos_Recebidos)
+INTO nro_votos_pleito
+FROM Candidatura
+WHERE Ano_Pleito = NEW.Ano_Pleito;
 UPDATE Pleito
 SET Total_Votos = nro_votos_pleito
 WHERE Ano = NEW.Ano_Pleito;
 RETURN NEW;
 END;
-$atualiza_votos_pleito$ LANGUAGE plpgsql;
+$atualiza_votos_pleito$
+LANGUAGE plpgsql;
 CREATE TRIGGER VALIDA_DOADOR_EMPRESA
-    AFTER INSERT OR UPDATE OR DELETE
-                    ON Candidatura
-                        FOR EACH ROW
-                        EXECUTE PROCEDURE atualiza_votos_pleito();
+    AFTER INSERT OR
+UPDATE OR
+DELETE
+ON Candidatura
+    FOR EACH ROW
+    EXECUTE PROCEDURE atualiza_votos_pleito();
 
 -- FIM TRIGGERS
-
 
 
 --- Insere pessoas
@@ -494,7 +567,8 @@ INSERT INTO Pessoa
 VALUES ('95690040225', '792570506059', 'Valentina Carvalho', 'Costa Rua, 37964, undefined Gabriel, PB',
         '2 grau completo');
 INSERT INTO Pessoa
-VALUES ('81192786749', '753771763411', 'Dalila Silva', 'Barros Rodovia, 8961, undefined Alessandra de Nossa Senhora, MG',
+VALUES ('81192786749', '753771763411', 'Dalila Silva',
+        'Barros Rodovia, 8961, undefined Alessandra de Nossa Senhora, MG',
         '2 grau incompleto');
 INSERT INTO Pessoa
 VALUES ('86534657040', '673884126963', 'Célia Albuquerque', 'Isabel Rodovia, 71693, Appleton, TO',
@@ -503,7 +577,8 @@ INSERT INTO Pessoa
 VALUES ('78782798836', '407709100726', 'Heitor Oliveira', 'Ofélia Rodovia, 80300, undefined Isabelly, CE',
         'superior incompleto');
 INSERT INTO Pessoa
-VALUES ('29455049331', '702889422932', 'Salvador Albuquerque', 'Saraiva Avenida, 59622, undefined Isabela de Nossa Senhora, PI',
+VALUES ('29455049331', '702889422932', 'Salvador Albuquerque',
+        'Saraiva Avenida, 59622, undefined Isabela de Nossa Senhora, PI',
         'superior incompleto');
 INSERT INTO Pessoa
 VALUES ('91382141099', '708261422184', 'Carlos Oliveira', 'Moraes Avenida, 90811, undefined Pablo do Norte, PB',
@@ -569,10 +644,12 @@ INSERT INTO Pessoa
 VALUES ('61831559098', '365997886029', 'Gustavo Albuquerque', 'Lorena Rodovia, 6960, César do Norte, SP',
         '2 grau incompleto');
 INSERT INTO Pessoa
-VALUES ('66159643984', '365778319560', 'Alessandro Batista', 'Pereira Travessa, 92107, undefined Vitória do Descoberto, RS',
+VALUES ('66159643984', '365778319560', 'Alessandro Batista',
+        'Pereira Travessa, 92107, undefined Vitória do Descoberto, RS',
         'superior completo');
 INSERT INTO Pessoa
-VALUES ('29222821181', '921150226308', 'Valentina Batista', 'Marcela Travessa, 50678, undefined Marcelo do Descoberto, SC',
+VALUES ('29222821181', '921150226308', 'Valentina Batista',
+        'Marcela Travessa, 50678, undefined Marcelo do Descoberto, SC',
         'superior incompleto');
 INSERT INTO Pessoa
 VALUES ('53198584232', '725511316466', 'Roberta Melo', 'Heloísa Marginal, 78057, Albuquerque do Descoberto, TO',
@@ -644,7 +721,8 @@ INSERT INTO Pessoa
 VALUES ('17060826153', '326290251500', 'João Melo', 'Sílvia Alameda, 71441, Madison, PI',
         '2 grau incompleto');
 INSERT INTO Pessoa
-VALUES ('44884157183', '153894656710', 'João Pedro Albuquerque', 'Franco Avenida, 54023, undefined Marina do Descoberto, PI',
+VALUES ('44884157183', '153894656710', 'João Pedro Albuquerque',
+        'Franco Avenida, 54023, undefined Marina do Descoberto, PI',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('21502376149', '717101258481', 'Margarida Pereira', 'Melo Marginal, 66200, undefined Enzo Gabriel, RJ',
@@ -674,7 +752,8 @@ INSERT INTO Pessoa
 VALUES ('48673702988', '857499040383', 'Maria Eduarda Souza', 'Pietro Avenida, 33802, Murrieta, PA',
         'analfabeto');
 INSERT INTO Pessoa
-VALUES ('14975074331', '807499389746', 'Júlio César Martins', 'Silva Marginal, 72538, undefined Washington de Nossa Senhora, SE',
+VALUES ('14975074331', '807499389746', 'Júlio César Martins',
+        'Silva Marginal, 72538, undefined Washington de Nossa Senhora, SE',
         'mestrado');
 INSERT INTO Pessoa
 VALUES ('18462353327', '346099924948', 'Lucas Oliveira', 'Benjamin Alameda, 50301, undefined Norberto do Norte, GO',
@@ -683,7 +762,8 @@ INSERT INTO Pessoa
 VALUES ('40210098912', '533040334773', 'Lucas Franco', 'Matheus Avenida, 46844, Miguel do Norte, DF',
         '2 grau completo');
 INSERT INTO Pessoa
-VALUES ('54687466805', '567506145196', 'Antônio Batista', 'Maria Eduarda Marginal, 90169, undefined Júlio César de Nossa Senhora, DF',
+VALUES ('54687466805', '567506145196', 'Antônio Batista',
+        'Maria Eduarda Marginal, 90169, undefined Júlio César de Nossa Senhora, DF',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('74122189518', '762674024351', 'Paulo Souza', 'Moreira Avenida, 36017, undefined Rafaela, BA',
@@ -782,7 +862,8 @@ INSERT INTO Pessoa
 VALUES ('51697040249', '871105447714', 'Célia Oliveira', 'Souza Travessa, 91591, Emanuelly do Descoberto, MT',
         'mestrado');
 INSERT INTO Pessoa
-VALUES ('79293712463', '465915319998', 'Aline Souza', 'Nogueira Rodovia, 70961, undefined Norberto de Nossa Senhora, RS',
+VALUES ('79293712463', '465915319998', 'Aline Souza',
+        'Nogueira Rodovia, 70961, undefined Norberto de Nossa Senhora, RS',
         'mestrado');
 INSERT INTO Pessoa
 VALUES ('47333944300', '249825586914', 'Célia Souza', 'Moraes Alameda, 98421, Gulfport, AP',
@@ -818,7 +899,8 @@ INSERT INTO Pessoa
 VALUES ('16469240479', '312730140145', 'Suélen Moreira', 'Reis Marginal, 8614, undefined Benjamin, PI',
         '2 grau incompleto');
 INSERT INTO Pessoa
-VALUES ('74316856097', '321662148041', 'Morgana Xavier', 'Albuquerque Travessa, 47832, undefined Maria Alice do Norte, RR',
+VALUES ('74316856097', '321662148041', 'Morgana Xavier',
+        'Albuquerque Travessa, 47832, undefined Maria Alice do Norte, RR',
         'doutorado');
 INSERT INTO Pessoa
 VALUES ('98239704843', '603511976520', 'Lucca Macedo', 'Lívia Marginal, 86384, undefined Isis, PA',
@@ -914,7 +996,8 @@ INSERT INTO Pessoa
 VALUES ('67661317153', '231537491246', 'Júlio César Barros', 'Braga Travessa, 25305, Rafaela de Nossa Senhora, PB',
         'analfabeto');
 INSERT INTO Pessoa
-VALUES ('55587859393', '764514791080', 'Karla Barros', 'Emanuelly Marginal, 40606, undefined Mariana de Nossa Senhora, MS',
+VALUES ('55587859393', '764514791080', 'Karla Barros',
+        'Emanuelly Marginal, 40606, undefined Mariana de Nossa Senhora, MS',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('58593827674', '494247421319', 'Salvador Saraiva', 'Pablo Rua, 42570, Ana Luiza do Descoberto, AM',
@@ -974,7 +1057,8 @@ INSERT INTO Pessoa
 VALUES ('76737339326', '782639195094', 'Davi Lucca Saraiva', 'Larissa Rodovia, 62017, Barros do Sul, ES',
         'superior incompleto');
 INSERT INTO Pessoa
-VALUES ('64671861850', '174926470313', 'Maria Alice Souza', 'Pereira Marginal, 67574, undefined Hélio de Nossa Senhora, MT',
+VALUES ('64671861850', '174926470313', 'Maria Alice Souza',
+        'Pereira Marginal, 67574, undefined Hélio de Nossa Senhora, MT',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('18379429504', '540743623767', 'Hugo Nogueira', 'Albuquerque Marginal, 62044, Huntersville, BA',
@@ -1076,7 +1160,8 @@ INSERT INTO Pessoa
 VALUES ('34139046359', '441549849580', 'Lara Nogueira', 'Gabriel Avenida, 53186, undefined Alessandra do Sul, MG',
         'doutorado');
 INSERT INTO Pessoa
-VALUES ('13690152484', '983058007177', 'Fabrício Silva', 'Franco Travessa, 80565, undefined Pietro de Nossa Senhora, SE',
+VALUES ('13690152484', '983058007177', 'Fabrício Silva',
+        'Franco Travessa, 80565, undefined Pietro de Nossa Senhora, SE',
         'pos-graduação');
 INSERT INTO Pessoa
 VALUES ('47292644651', '204921054863', 'João Lucas Barros', 'Felícia Avenida, 46920, Júlio do Descoberto, DF',
@@ -1091,7 +1176,8 @@ INSERT INTO Pessoa
 VALUES ('93231366153', '103492280561', 'Luiza Silva', 'Márcia Travessa, 97047, undefined Benício do Sul, MT',
         'mestrado');
 INSERT INTO Pessoa
-VALUES ('74947254906', '245336351473', 'Clara Santos', 'Manuela Rodovia, 17478, undefined Emanuelly de Nossa Senhora, RJ',
+VALUES ('74947254906', '245336351473', 'Clara Santos',
+        'Manuela Rodovia, 17478, undefined Emanuelly de Nossa Senhora, RJ',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('71402272270', '323118908354', 'Feliciano Albuquerque', 'Yago Rua, 98083, Moraes do Sul, RR',
@@ -1124,10 +1210,12 @@ INSERT INTO Pessoa
 VALUES ('48550814816', '135223792423', 'Joana Franco', 'Hélio Marginal, 15364, Isabella do Sul, SC',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('96349825211', '624131092242', 'Feliciano Barros', 'Marcos Alameda, 44065, undefined Fábio de Nossa Senhora, MT',
+VALUES ('96349825211', '624131092242', 'Feliciano Barros',
+        'Marcos Alameda, 44065, undefined Fábio de Nossa Senhora, MT',
         'analfabeto');
 INSERT INTO Pessoa
-VALUES ('73774401368', '837083511869', 'Pedro Henrique Costa', 'Oliveira Rodovia, 40917, undefined Lorraine de Nossa Senhora, RO',
+VALUES ('73774401368', '837083511869', 'Pedro Henrique Costa',
+        'Oliveira Rodovia, 40917, undefined Lorraine de Nossa Senhora, RO',
         '2 grau incompleto');
 INSERT INTO Pessoa
 VALUES ('52510659939', '840007317089', 'Aline Reis', 'Batista Rua, 39606, Norwalk, RR',
@@ -1139,7 +1227,8 @@ INSERT INTO Pessoa
 VALUES ('69286284870', '869648811244', 'Pedro Santos', 'Rafaela Rodovia, 84028, Barros do Sul, AC',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('49412925681', '761809118604', 'Mércia Moraes', 'Carvalho Alameda, 40265, undefined Deneval de Nossa Senhora, MS',
+VALUES ('49412925681', '761809118604', 'Mércia Moraes',
+        'Carvalho Alameda, 40265, undefined Deneval de Nossa Senhora, MS',
         'doutorado');
 INSERT INTO Pessoa
 VALUES ('92413099054', '201477297139', 'Arthur Melo', 'Liz Rodovia, 15826, undefined Júlio César do Norte, PE',
@@ -1265,7 +1354,8 @@ INSERT INTO Pessoa
 VALUES ('60675624620', '520937312301', 'Vitória Macedo', 'Batista Avenida, 68017, Evanston, GO',
         'superior completo');
 INSERT INTO Pessoa
-VALUES ('83541382439', '472209071065', 'Manuela Saraiva', 'Albuquerque Avenida, 97201, undefined Valentina do Descoberto, AM',
+VALUES ('83541382439', '472209071065', 'Manuela Saraiva',
+        'Albuquerque Avenida, 97201, undefined Valentina do Descoberto, AM',
         'superior completo');
 INSERT INTO Pessoa
 VALUES ('57094455254', '515762439696', 'Víctor Braga', 'Moraes Rua, 38612, undefined João, MG',
@@ -1349,7 +1439,8 @@ INSERT INTO Pessoa
 VALUES ('43863967857', '888390352157', 'Mariana Pereira', 'Silva Alameda, 62574, Washington de Nossa Senhora, AC',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('59355980886', '286810823506', 'Isabelly Braga', 'Albuquerque Rodovia, 21166, undefined Alícia de Nossa Senhora, AL',
+VALUES ('59355980886', '286810823506', 'Isabelly Braga',
+        'Albuquerque Rodovia, 21166, undefined Alícia de Nossa Senhora, AL',
         '1 grau completo');
 INSERT INTO Pessoa
 VALUES ('52959466576', '154382234113', 'Salvador Saraiva', 'Xavier Avenida, 4428, undefined Dalila do Sul, ES',
@@ -1397,7 +1488,8 @@ INSERT INTO Pessoa
 VALUES ('81479468415', '319994820281', 'Lorenzo Batista', 'Batista Travessa, 60670, Revere, AP',
         'superior completo');
 INSERT INTO Pessoa
-VALUES ('67031022950', '544684004434', 'Washington Pereira', 'Calebe Rua, 83777, undefined João Miguel de Nossa Senhora, MS',
+VALUES ('67031022950', '544684004434', 'Washington Pereira',
+        'Calebe Rua, 83777, undefined João Miguel de Nossa Senhora, MS',
         'mestrado');
 INSERT INTO Pessoa
 VALUES ('40069712323', '769550354988', 'Lívia Silva', 'Silva Rodovia, 28237, Pietro do Sul, RS',
@@ -1406,7 +1498,8 @@ INSERT INTO Pessoa
 VALUES ('99008050856', '604066471476', 'Alícia Nogueira', 'Albuquerque Alameda, 37447, undefined Breno, RS',
         'mestrado');
 INSERT INTO Pessoa
-VALUES ('83153095280', '845469993446', 'João Martins', 'Albuquerque Avenida, 15394, undefined João Lucas do Descoberto, DF',
+VALUES ('83153095280', '845469993446', 'João Martins',
+        'Albuquerque Avenida, 15394, undefined João Lucas do Descoberto, DF',
         'pos-graduação');
 INSERT INTO Pessoa
 VALUES ('16912034694', '838103586551', 'Noah Franco', 'Braga Travessa, 96581, Batista do Descoberto, GO',
@@ -1538,7 +1631,8 @@ INSERT INTO Pessoa
 VALUES ('37988147598', '497827086574', 'Luiza Xavier', 'Pereira Avenida, 18968, Inglewood, RO',
         '2 grau incompleto');
 INSERT INTO Pessoa
-VALUES ('10065442044', '497622452257', 'Giovanna Costa', 'Alexandre Avenida, 51215, undefined Daniel de Nossa Senhora, AC',
+VALUES ('10065442044', '497622452257', 'Giovanna Costa',
+        'Alexandre Avenida, 51215, undefined Daniel de Nossa Senhora, AC',
         'doutorado');
 INSERT INTO Pessoa
 VALUES ('65208211410', '480380201223', 'Maria Clara Nogueira', 'Barros Marginal, 84796, Pereira do Norte, RN',
@@ -1556,7 +1650,8 @@ INSERT INTO Pessoa
 VALUES ('12213830926', '752061433764', 'Suélen Saraiva', 'Santos Rua, 35408, undefined Guilherme, MS',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('75511465452', '575377446715', 'Joaquim Oliveira', 'Lorraine Alameda, 34005, undefined Carlos do Descoberto, BA',
+VALUES ('75511465452', '575377446715', 'Joaquim Oliveira',
+        'Lorraine Alameda, 34005, undefined Carlos do Descoberto, BA',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('12044297421', '211017734394', 'Lorenzo Batista', 'Nogueira Marginal, 56792, Macedo do Descoberto, ES',
@@ -1733,7 +1828,8 @@ INSERT INTO Pessoa
 VALUES ('11120354053', '826979888672', 'Marcelo Santos', 'Nataniel Alameda, 73378, undefined Alessandra, PA',
         '2 grau completo');
 INSERT INTO Pessoa
-VALUES ('29078152088', '496783245634', 'Felícia Moreira', 'Fabrício Avenida, 36328, undefined Célia de Nossa Senhora, GO',
+VALUES ('29078152088', '496783245634', 'Felícia Moreira',
+        'Fabrício Avenida, 36328, undefined Célia de Nossa Senhora, GO',
         'mestrado');
 INSERT INTO Pessoa
 VALUES ('17360159694', '699471617676', 'Marcela Batista', 'João Miguel Marginal, 30139, Costa do Sul, MS',
@@ -1745,10 +1841,12 @@ INSERT INTO Pessoa
 VALUES ('23858233627', '127606774377', 'Silas Melo', 'Ana Clara Rua, 20688, undefined Heitor de Nossa Senhora, AP',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('54304455467', '721641202759', 'Núbia Carvalho', 'Santos Alameda, 23324, undefined Lorenzo de Nossa Senhora, PI',
+VALUES ('54304455467', '721641202759', 'Núbia Carvalho',
+        'Santos Alameda, 23324, undefined Lorenzo de Nossa Senhora, PI',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('21448547421', '623217347450', 'Maria Luiza Martins', 'Carvalho Travessa, 27643, Davi Lucca de Nossa Senhora, TO',
+VALUES ('21448547421', '623217347450', 'Maria Luiza Martins',
+        'Carvalho Travessa, 27643, Davi Lucca de Nossa Senhora, TO',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('90814044619', '752750996593', 'Marina Pereira', 'Lucca Rua, 43722, undefined Roberta, RR',
@@ -1925,7 +2023,8 @@ INSERT INTO Pessoa
 VALUES ('93630574638', '340479336888', 'Eduardo Silva', 'Sarah Rodovia, 51411, Lavínia do Norte, SE',
         'superior completo');
 INSERT INTO Pessoa
-VALUES ('30010755995', '234906207467', 'Aline Martins', 'Eduardo Rodovia, 85796, undefined Henrique de Nossa Senhora, RO',
+VALUES ('30010755995', '234906207467', 'Aline Martins',
+        'Eduardo Rodovia, 85796, undefined Henrique de Nossa Senhora, RO',
         'superior completo');
 INSERT INTO Pessoa
 VALUES ('11529379235', '834036870906', 'Felipe Souza', 'Ricardo Rua, 24011, Phoenix, TO',
@@ -1973,7 +2072,8 @@ INSERT INTO Pessoa
 VALUES ('84785704296', '483675170945', 'Marina Martins', 'Mércia Avenida, 76146, undefined Antônio do Sul, MS',
         'superior completo');
 INSERT INTO Pessoa
-VALUES ('15691747337', '492169188358', 'Yasmin Franco', 'Carvalho Avenida, 92057, undefined Cecília de Nossa Senhora, SC',
+VALUES ('15691747337', '492169188358', 'Yasmin Franco',
+        'Carvalho Avenida, 92057, undefined Cecília de Nossa Senhora, SC',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('95204672040', '323997421702', 'Aline Oliveira', 'Aline Alameda, 29056, Vitor do Sul, CE',
@@ -2015,7 +2115,8 @@ INSERT INTO Pessoa
 VALUES ('60623790931', '797334964433', 'Sophia Silva', 'Márcia Rua, 15300, Fort Smith, MG',
         '2 grau completo');
 INSERT INTO Pessoa
-VALUES ('74355497739', '254750704579', 'Maria Clara Oliveira', 'Kléber Travessa, 29081, Enzo Gabriel de Nossa Senhora, BA',
+VALUES ('74355497739', '254750704579', 'Maria Clara Oliveira',
+        'Kléber Travessa, 29081, Enzo Gabriel de Nossa Senhora, BA',
         'superior completo');
 INSERT INTO Pessoa
 VALUES ('45168306697', '387460939749', 'Calebe Nogueira', 'João Lucas Travessa, 37919, undefined Isaac, PE',
@@ -2027,7 +2128,8 @@ INSERT INTO Pessoa
 VALUES ('90606078894', '260261762747', 'Dalila Moraes', 'Joaquim Rua, 52399, Reis do Sul, TO',
         'mestrado');
 INSERT INTO Pessoa
-VALUES ('12061152968', '151085510058', 'Janaína Moreira', 'Albuquerque Marginal, 53005, undefined Ana Júlia do Norte, CE',
+VALUES ('12061152968', '151085510058', 'Janaína Moreira',
+        'Albuquerque Marginal, 53005, undefined Ana Júlia do Norte, CE',
         'mestrado');
 INSERT INTO Pessoa
 VALUES ('98850444883', '760890439804', 'Maria Eduarda Nogueira', 'Giovanna Rodovia, 90137, Pereira do Sul, MT',
@@ -2099,7 +2201,8 @@ INSERT INTO Pessoa
 VALUES ('41830698924', '572503378870', 'Marcos Macedo', 'Marli Avenida, 64007, Silva do Sul, PI',
         'doutorado');
 INSERT INTO Pessoa
-VALUES ('30848156486', '831693002651', 'Maria Alice Xavier', 'Albuquerque Alameda, 64879, undefined Salvador do Descoberto, MS',
+VALUES ('30848156486', '831693002651', 'Maria Alice Xavier',
+        'Albuquerque Alameda, 64879, undefined Salvador do Descoberto, MS',
         'pos-graduação');
 INSERT INTO Pessoa
 VALUES ('56085495813', '392704756651', 'Leonardo Martins', 'Lara Rua, 12282, Compton, AP',
@@ -2129,7 +2232,8 @@ INSERT INTO Pessoa
 VALUES ('52176460425', '649132075207', 'Yago Silva', 'Emanuel Avenida, 34877, Spokane Valley, PR',
         'analfabeto');
 INSERT INTO Pessoa
-VALUES ('40100553724', '840726930089', 'Júlia Oliveira', 'Isabelly Alameda, 74125, undefined Vitória de Nossa Senhora, CE',
+VALUES ('40100553724', '840726930089', 'Júlia Oliveira',
+        'Isabelly Alameda, 74125, undefined Vitória de Nossa Senhora, CE',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('43260389566', '137894949899', 'Raul Souza', 'Oliveira Travessa, 47800, undefined Deneval, DF',
@@ -2189,7 +2293,8 @@ INSERT INTO Pessoa
 VALUES ('44387366895', '432336252904', 'Daniel Xavier', 'Saraiva Marginal, 67875, Savannah, SP',
         '2 grau incompleto');
 INSERT INTO Pessoa
-VALUES ('58588938803', '983127719257', 'Fabrício Carvalho', 'Barros Rodovia, 35726, undefined Eloá de Nossa Senhora, PI',
+VALUES ('58588938803', '983127719257', 'Fabrício Carvalho',
+        'Barros Rodovia, 35726, undefined Eloá de Nossa Senhora, PI',
         'superior incompleto');
 INSERT INTO Pessoa
 VALUES ('31959316115', '592998679424', 'Antônio Franco', 'Xavier Rua, 17135, San Bruno, MA',
@@ -2201,7 +2306,8 @@ INSERT INTO Pessoa
 VALUES ('27744644728', '356106606824', 'Mércia Franco', 'Marina Alameda, 47067, Tertuliano do Descoberto, RJ',
         'superior incompleto');
 INSERT INTO Pessoa
-VALUES ('28760097629', '327841930370', 'Lavínia Pereira', 'Saraiva Rodovia, 65401, undefined Sirineu de Nossa Senhora, ES',
+VALUES ('28760097629', '327841930370', 'Lavínia Pereira',
+        'Saraiva Rodovia, 65401, undefined Sirineu de Nossa Senhora, ES',
         '1 grau completo');
 INSERT INTO Pessoa
 VALUES ('99712320971', '713346170471', 'Fábio Moraes', 'Laura Rua, 83522, Roberto do Norte, CE',
@@ -2429,7 +2535,8 @@ INSERT INTO Pessoa
 VALUES ('69452778594', '372765271412', 'Pablo Nogueira', 'Franco Avenida, 35935, Eduarda do Descoberto, RJ',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('42713638902', '928518732031', 'João Pedro Costa', 'Elísio Alameda, 67570, undefined Danilo de Nossa Senhora, AC',
+VALUES ('42713638902', '928518732031', 'João Pedro Costa',
+        'Elísio Alameda, 67570, undefined Danilo de Nossa Senhora, AC',
         'pos-graduação');
 INSERT INTO Pessoa
 VALUES ('59156701033', '340970802865', 'Pedro Henrique Pereira', 'Nogueira Alameda, 63834, undefined Isabelly, GO',
@@ -2525,7 +2632,8 @@ INSERT INTO Pessoa
 VALUES ('27573815234', '539754210505', 'Luiza Martins', 'Ladislau Travessa, 17703, undefined Maria do Descoberto, RS',
         'analfabeto');
 INSERT INTO Pessoa
-VALUES ('15132983059', '151305004651', 'Valentina Reis', 'Vicente Marginal, 73558, undefined Feliciano do Descoberto, RO',
+VALUES ('15132983059', '151305004651', 'Valentina Reis',
+        'Vicente Marginal, 73558, undefined Feliciano do Descoberto, RO',
         'analfabeto');
 INSERT INTO Pessoa
 VALUES ('34702133666', '163371751084', 'Marcos Albuquerque', 'Pietro Avenida, 34590, Murfreesboro, RS',
@@ -2558,7 +2666,8 @@ INSERT INTO Pessoa
 VALUES ('56544090188', '493659915705', 'Kléber Melo', 'Maria Luiza Marginal, 85395, Elizabeth, SP',
         'superior incompleto');
 INSERT INTO Pessoa
-VALUES ('73725674431', '672347883577', 'Hélio Saraiva', 'Oliveira Rodovia, 1345, undefined Maria Eduarda de Nossa Senhora, PA',
+VALUES ('73725674431', '672347883577', 'Hélio Saraiva',
+        'Oliveira Rodovia, 1345, undefined Maria Eduarda de Nossa Senhora, PA',
         '1 grau completo');
 INSERT INTO Pessoa
 VALUES ('93420833500', '737479318631', 'Ana Laura Moreira', 'Núbia Alameda, 53973, Hesperia, PR',
@@ -2618,7 +2727,8 @@ INSERT INTO Pessoa
 VALUES ('94048417352', '280688597401', 'Kléber Oliveira', 'Moraes Avenida, 50617, Macedo do Sul, PB',
         'mestrado');
 INSERT INTO Pessoa
-VALUES ('68767157313', '708482025493', 'Bernardo Batista', 'Emanuelly Avenida, 57949, undefined Joaquim de Nossa Senhora, CE',
+VALUES ('68767157313', '708482025493', 'Bernardo Batista',
+        'Emanuelly Avenida, 57949, undefined Joaquim de Nossa Senhora, CE',
         'doutorado');
 INSERT INTO Pessoa
 VALUES ('15402143090', '178582744696', 'Murilo Carvalho', 'Kléber Rua, 13743, Moreira do Norte, TO',
@@ -2750,7 +2860,8 @@ INSERT INTO Pessoa
 VALUES ('91929024783', '833248878340', 'Nataniel Braga', 'Maitê Rua, 97522, undefined Marina, AL',
         'pos-graduação');
 INSERT INTO Pessoa
-VALUES ('18369440392', '107249914575', 'Lorena Santos', 'Melo Avenida, 90434, undefined Enzo Gabriel de Nossa Senhora, RN',
+VALUES ('18369440392', '107249914575', 'Lorena Santos',
+        'Melo Avenida, 90434, undefined Enzo Gabriel de Nossa Senhora, RN',
         '2 grau incompleto');
 INSERT INTO Pessoa
 VALUES ('37706179977', '121909469901', 'Ana Laura Souza', 'João Lucas Marginal, 38869, Martins do Descoberto, AC',
@@ -2846,7 +2957,8 @@ INSERT INTO Pessoa
 VALUES ('65620046039', '604197531542', 'Vitória Oliveira', 'Júlio César Marginal, 13908, undefined Elisa, SC',
         '2 grau completo');
 INSERT INTO Pessoa
-VALUES ('20822501375', '531667840038', 'João Pedro Nogueira', 'Moraes Alameda, 28877, undefined Henrique de Nossa Senhora, MT',
+VALUES ('20822501375', '531667840038', 'João Pedro Nogueira',
+        'Moraes Alameda, 28877, undefined Henrique de Nossa Senhora, MT',
         '1 grau completo');
 INSERT INTO Pessoa
 VALUES ('63900773341', '224455259158', 'Célia Melo', 'Karla Rodovia, 82993, Beavercreek, CE',
@@ -2879,7 +2991,8 @@ INSERT INTO Pessoa
 VALUES ('60125770117', '989550624345', 'Isabela Carvalho', 'Reis Alameda, 69964, undefined Alice, CE',
         '2 grau incompleto');
 INSERT INTO Pessoa
-VALUES ('95140033254', '392562150722', 'Enzo Gabriel Moraes', 'Bruna Rua, 84280, undefined Maria Eduarda de Nossa Senhora, MS',
+VALUES ('95140033254', '392562150722', 'Enzo Gabriel Moraes',
+        'Bruna Rua, 84280, undefined Maria Eduarda de Nossa Senhora, MS',
         '2 grau incompleto');
 INSERT INTO Pessoa
 VALUES ('12399218089', '335922847362', 'Elisa Albuquerque', 'Macedo Travessa, 48898, undefined Pedro do Sul, SE',
@@ -3023,7 +3136,8 @@ INSERT INTO Pessoa
 VALUES ('56279783362', '499257095204', 'Paula Oliveira', 'Oliveira Travessa, 80486, Surprise, GO',
         'mestrado');
 INSERT INTO Pessoa
-VALUES ('18236701744', '144858884206', 'Salvador Santos', 'Nogueira Marginal, 12476, undefined Júlio César do Descoberto, PI',
+VALUES ('18236701744', '144858884206', 'Salvador Santos',
+        'Nogueira Marginal, 12476, undefined Júlio César do Descoberto, PI',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('42089914267', '240141560742', 'João Lucas Carvalho', 'Giovanna Marginal, 99246, Maria Clara do Norte, AM',
@@ -3044,7 +3158,8 @@ INSERT INTO Pessoa
 VALUES ('10737233394', '491160033829', 'Heloísa Carvalho', 'Reis Rua, 8991, Titusville, MS',
         'analfabeto');
 INSERT INTO Pessoa
-VALUES ('54063647601', '525374395120', 'Raul Moraes', 'Albuquerque Rodovia, 17723, undefined Ana Clara do Descoberto, RJ',
+VALUES ('54063647601', '525374395120', 'Raul Moraes',
+        'Albuquerque Rodovia, 17723, undefined Ana Clara do Descoberto, RJ',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('70077948186', '342812501452', 'Sara Melo', 'Saraiva Marginal, 86791, undefined Gustavo, AP',
@@ -3137,7 +3252,8 @@ INSERT INTO Pessoa
 VALUES ('60652495953', '283574904710', 'Fabrícia Silva', 'Franco Rua, 64225, undefined Bruna do Sul, SP',
         'doutorado');
 INSERT INTO Pessoa
-VALUES ('90257081068', '869513709843', 'Washington Nogueira', 'Saraiva Avenida, 95704, undefined Arthur do Descoberto, RO',
+VALUES ('90257081068', '869513709843', 'Washington Nogueira',
+        'Saraiva Avenida, 95704, undefined Arthur do Descoberto, RO',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('13407645802', '240213485434', 'Danilo Reis', 'Moreira Marginal, 73143, Springfield, PB',
@@ -3170,7 +3286,8 @@ INSERT INTO Pessoa
 VALUES ('75953406409', '256945531489', 'Norberto Silva', 'Braga Marginal, 65520, Alpharetta, DF',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('97468617402', '338767608930', 'Samuel Macedo', 'Maria Clara Marginal, 34913, undefined Pietro de Nossa Senhora, RJ',
+VALUES ('97468617402', '338767608930', 'Samuel Macedo',
+        'Maria Clara Marginal, 34913, undefined Pietro de Nossa Senhora, RJ',
         'pos-graduação');
 INSERT INTO Pessoa
 VALUES ('13908656504', '819752949732', 'Isadora Moreira', 'Isadora Rua, 6220, Carvalho de Nossa Senhora, AC',
@@ -3239,7 +3356,8 @@ INSERT INTO Pessoa
 VALUES ('59043336380', '966462650056', 'Heitor Silva', 'Frederico Alameda, 59927, undefined Eduarda, PB',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('20972278714', '217094629700', 'Ladislau Albuquerque', 'Albuquerque Avenida, 63198, Oliveira de Nossa Senhora, AL',
+VALUES ('20972278714', '217094629700', 'Ladislau Albuquerque',
+        'Albuquerque Avenida, 63198, Oliveira de Nossa Senhora, AL',
         'analfabeto');
 INSERT INTO Pessoa
 VALUES ('92095009516', '235747190634', 'Giovanna Nogueira', 'Barros Rodovia, 78969, Barros de Nossa Senhora, PE',
@@ -3278,7 +3396,8 @@ INSERT INTO Pessoa
 VALUES ('57025125327', '434977939189', 'Gabriel Braga', 'Esther Travessa, 47433, Leonardo de Nossa Senhora, TO',
         'pos-graduação');
 INSERT INTO Pessoa
-VALUES ('54010952000', '713675339543', 'Eduardo Moraes', 'Albuquerque Rodovia, 16508, undefined Sophia de Nossa Senhora, RS',
+VALUES ('54010952000', '713675339543', 'Eduardo Moraes',
+        'Albuquerque Rodovia, 16508, undefined Sophia de Nossa Senhora, RS',
         '1 grau completo');
 INSERT INTO Pessoa
 VALUES ('61883076978', '326110777771', 'João Pedro Reis', 'Costa Travessa, 24507, Pereira do Sul, GO',
@@ -3293,13 +3412,15 @@ INSERT INTO Pessoa
 VALUES ('49287718026', '932749317237', 'Benício Franco', 'Carvalho Alameda, 83226, undefined Eduarda, PI',
         'pos-graduação');
 INSERT INTO Pessoa
-VALUES ('15527605952', '648887395299', 'Valentina Martins', 'Felícia Rua, 89726, undefined Júlio César do Descoberto, PA',
+VALUES ('15527605952', '648887395299', 'Valentina Martins',
+        'Felícia Rua, 89726, undefined Júlio César do Descoberto, PA',
         '1 grau completo');
 INSERT INTO Pessoa
 VALUES ('99513478213', '354593788762', 'Benjamin Silva', 'Felipe Rua, 19235, undefined Ígor do Norte, AL',
         '1 grau completo');
 INSERT INTO Pessoa
-VALUES ('49351430758', '360025628935', 'Margarida Souza', 'Antônio Avenida, 74816, undefined Maria Clara de Nossa Senhora, RS',
+VALUES ('49351430758', '360025628935', 'Margarida Souza',
+        'Antônio Avenida, 74816, undefined Maria Clara de Nossa Senhora, RS',
         '2 grau completo');
 INSERT INTO Pessoa
 VALUES ('41319743199', '438817669544', 'Márcia Moreira', 'Barros Marginal, 41771, Reis de Nossa Senhora, PE',
@@ -3360,45 +3481,85 @@ VALUES ('35423602398', '992095919162', 'Calebe Batista', 'Hélio Alameda, 98683,
 --- Insere programa partidos
 
 INSERT INTO Programa_Partido
-VALUES ('2f99a0c6-14b2-423c-a42d-4971f385492e', 'Voluptas aliquid quisquam quia aut tempore iusto qui tempore aut blanditiis omnis odio dolor sint atque id consequatur est sapiente.', '2007-9-14');
+VALUES ('2f99a0c6-14b2-423c-a42d-4971f385492e',
+        'Voluptas aliquid quisquam quia aut tempore iusto qui tempore aut blanditiis omnis odio dolor sint atque id consequatur est sapiente.',
+        '2007-9-14');
 INSERT INTO Programa_Partido
-VALUES ('c52c8893-bc14-4506-9829-3401291ad1ef', 'Rerum maxime facere perspiciatis doloremque ex qui non expedita nesciunt labore consequatur est quo aut veniam optio non aperiam natus.', '2009-2-26');
+VALUES ('c52c8893-bc14-4506-9829-3401291ad1ef',
+        'Rerum maxime facere perspiciatis doloremque ex qui non expedita nesciunt labore consequatur est quo aut veniam optio non aperiam natus.',
+        '2009-2-26');
 INSERT INTO Programa_Partido
-VALUES ('2097d321-f086-4af6-8769-23012d6df5f4', 'Quae sunt cupiditate quos commodi recusandae maiores vel aliquam facilis non ducimus sunt ullam dolorem harum architecto qui rerum est.', '2017-6-2');
+VALUES ('2097d321-f086-4af6-8769-23012d6df5f4',
+        'Quae sunt cupiditate quos commodi recusandae maiores vel aliquam facilis non ducimus sunt ullam dolorem harum architecto qui rerum est.',
+        '2017-6-2');
 INSERT INTO Programa_Partido
-VALUES ('656d324a-7add-4d50-90b4-d223b81d33f7', 'Repellat totam cupiditate aut veritatis ipsa quasi ipsam vero recusandae voluptas qui et corrupti accusantium aspernatur totam aut officia sit.', '2018-7-10');
+VALUES ('656d324a-7add-4d50-90b4-d223b81d33f7',
+        'Repellat totam cupiditate aut veritatis ipsa quasi ipsam vero recusandae voluptas qui et corrupti accusantium aspernatur totam aut officia sit.',
+        '2018-7-10');
 INSERT INTO Programa_Partido
-VALUES ('29a59514-bf06-4663-a580-fddc1ed66778', 'Laudantium voluptate quae maxime sed soluta veritatis corrupti eligendi alias fugit velit nemo dignissimos molestiae et alias possimus quae nesciunt.', '2014-10-1');
+VALUES ('29a59514-bf06-4663-a580-fddc1ed66778',
+        'Laudantium voluptate quae maxime sed soluta veritatis corrupti eligendi alias fugit velit nemo dignissimos molestiae et alias possimus quae nesciunt.',
+        '2014-10-1');
 INSERT INTO Programa_Partido
-VALUES ('41a40280-ab3e-4f77-bf09-f26698aada94', 'Consequuntur suscipit eligendi vel perspiciatis quod occaecati dicta distinctio et iste neque sed ab non aut autem omnis incidunt ullam.', '2019-3-26');
+VALUES ('41a40280-ab3e-4f77-bf09-f26698aada94',
+        'Consequuntur suscipit eligendi vel perspiciatis quod occaecati dicta distinctio et iste neque sed ab non aut autem omnis incidunt ullam.',
+        '2019-3-26');
 INSERT INTO Programa_Partido
-VALUES ('e4f7abaa-fb6d-4ba1-935c-53944e355356', 'Temporibus soluta ratione rem repellat consequatur cupiditate quae incidunt rem ea consequatur et repudiandae eveniet et sit sit totam omnis.', '2006-12-27');
+VALUES ('e4f7abaa-fb6d-4ba1-935c-53944e355356',
+        'Temporibus soluta ratione rem repellat consequatur cupiditate quae incidunt rem ea consequatur et repudiandae eveniet et sit sit totam omnis.',
+        '2006-12-27');
 INSERT INTO Programa_Partido
-VALUES ('63bfbccd-78e7-415e-8c3c-a4982a085560', 'Neque animi et quis earum rem voluptatem nostrum enim aspernatur harum error sed neque nesciunt quo autem ullam reprehenderit facilis.', '2007-6-9');
+VALUES ('63bfbccd-78e7-415e-8c3c-a4982a085560',
+        'Neque animi et quis earum rem voluptatem nostrum enim aspernatur harum error sed neque nesciunt quo autem ullam reprehenderit facilis.',
+        '2007-6-9');
 INSERT INTO Programa_Partido
-VALUES ('ee20215b-009b-4593-99c1-c18831ed9631', 'Molestiae vel similique aut laborum et corporis rerum quis velit perspiciatis a et reiciendis delectus et reprehenderit architecto illum nemo.', '2016-6-28');
+VALUES ('ee20215b-009b-4593-99c1-c18831ed9631',
+        'Molestiae vel similique aut laborum et corporis rerum quis velit perspiciatis a et reiciendis delectus et reprehenderit architecto illum nemo.',
+        '2016-6-28');
 INSERT INTO Programa_Partido
-VALUES ('c2b4b108-48dd-41b5-989a-3aad25db6ca4', 'Veniam voluptatibus velit architecto eligendi omnis qui a tenetur rerum rerum provident est eos saepe porro dolorem ut labore asperiores.', '2015-2-14');
+VALUES ('c2b4b108-48dd-41b5-989a-3aad25db6ca4',
+        'Veniam voluptatibus velit architecto eligendi omnis qui a tenetur rerum rerum provident est eos saepe porro dolorem ut labore asperiores.',
+        '2015-2-14');
 INSERT INTO Programa_Partido
-VALUES ('c7c56782-2a5f-4226-8278-7e186b48582b', 'Velit perspiciatis optio libero ratione eum ullam eligendi ut dicta quia perspiciatis eum aut consequatur numquam ducimus quis non blanditiis.', '2017-5-1');
+VALUES ('c7c56782-2a5f-4226-8278-7e186b48582b',
+        'Velit perspiciatis optio libero ratione eum ullam eligendi ut dicta quia perspiciatis eum aut consequatur numquam ducimus quis non blanditiis.',
+        '2017-5-1');
 INSERT INTO Programa_Partido
-VALUES ('f37ee4b1-aab2-44f0-9e77-f260e5996aa2', 'Culpa quia ducimus dignissimos aliquid ut incidunt officiis minima dolorem hic ratione alias consequatur ex quia praesentium blanditiis libero facere.', '2021-4-26');
+VALUES ('f37ee4b1-aab2-44f0-9e77-f260e5996aa2',
+        'Culpa quia ducimus dignissimos aliquid ut incidunt officiis minima dolorem hic ratione alias consequatur ex quia praesentium blanditiis libero facere.',
+        '2021-4-26');
 INSERT INTO Programa_Partido
-VALUES ('bbdffa48-2fa8-4b79-b1b8-857fa9be3342', 'Sit accusamus et cumque dolorum accusantium ullam quidem aperiam aut suscipit est animi enim placeat laboriosam officia nihil facilis corporis.', '2013-5-7');
+VALUES ('bbdffa48-2fa8-4b79-b1b8-857fa9be3342',
+        'Sit accusamus et cumque dolorum accusantium ullam quidem aperiam aut suscipit est animi enim placeat laboriosam officia nihil facilis corporis.',
+        '2013-5-7');
 INSERT INTO Programa_Partido
-VALUES ('f02d00e3-ef58-425c-a453-ca3b5e649610', 'Consequuntur quia eos maiores commodi ab aperiam et fuga commodi veritatis blanditiis consectetur id et est quae consectetur quae sint.', '2010-9-17');
+VALUES ('f02d00e3-ef58-425c-a453-ca3b5e649610',
+        'Consequuntur quia eos maiores commodi ab aperiam et fuga commodi veritatis blanditiis consectetur id et est quae consectetur quae sint.',
+        '2010-9-17');
 INSERT INTO Programa_Partido
-VALUES ('298d5e44-9307-4285-bcec-92bc565788fe', 'Vitae exercitationem sit est blanditiis ducimus unde quo neque eveniet dolor ut eum facere aut id autem quis dolorum ab.', '2011-11-15');
+VALUES ('298d5e44-9307-4285-bcec-92bc565788fe',
+        'Vitae exercitationem sit est blanditiis ducimus unde quo neque eveniet dolor ut eum facere aut id autem quis dolorum ab.',
+        '2011-11-15');
 INSERT INTO Programa_Partido
-VALUES ('b4668fbe-7965-4a09-80b3-d5591d1867e8', 'Ut quae sunt voluptatem blanditiis unde rerum sit quis fuga distinctio consequatur magni ex sunt dicta id nam et excepturi.', '2011-6-14');
+VALUES ('b4668fbe-7965-4a09-80b3-d5591d1867e8',
+        'Ut quae sunt voluptatem blanditiis unde rerum sit quis fuga distinctio consequatur magni ex sunt dicta id nam et excepturi.',
+        '2011-6-14');
 INSERT INTO Programa_Partido
-VALUES ('17b0dea6-53f0-4f2a-9110-81ad7304f0a7', 'Eius in tenetur minima voluptatum non ut voluptatem commodi suscipit eveniet omnis minima repellat hic velit aut voluptatem qui ipsam.', '2007-1-15');
+VALUES ('17b0dea6-53f0-4f2a-9110-81ad7304f0a7',
+        'Eius in tenetur minima voluptatum non ut voluptatem commodi suscipit eveniet omnis minima repellat hic velit aut voluptatem qui ipsam.',
+        '2007-1-15');
 INSERT INTO Programa_Partido
-VALUES ('beed2dc8-70ea-4a22-a094-c48495f004bf', 'Nobis vel ut id quia explicabo reiciendis repellendus tenetur nulla nihil et sed doloremque ipsa libero repudiandae officiis enim sapiente.', '2007-3-25');
+VALUES ('beed2dc8-70ea-4a22-a094-c48495f004bf',
+        'Nobis vel ut id quia explicabo reiciendis repellendus tenetur nulla nihil et sed doloremque ipsa libero repudiandae officiis enim sapiente.',
+        '2007-3-25');
 INSERT INTO Programa_Partido
-VALUES ('f4760900-94f3-4328-9c51-44f121068372', 'Quis quis fugiat impedit amet sint voluptatum id magnam est quas pariatur est voluptatem ut ex cumque eveniet illo facere.', '2008-8-23');
+VALUES ('f4760900-94f3-4328-9c51-44f121068372',
+        'Quis quis fugiat impedit amet sint voluptatum id magnam est quas pariatur est voluptatem ut ex cumque eveniet illo facere.',
+        '2008-8-23');
 INSERT INTO Programa_Partido
-VALUES ('f1b98028-0899-43b4-aac8-0f29f624b979', 'Atque vitae quod eum similique cumque reprehenderit rerum minus nihil suscipit animi in aspernatur pariatur harum fugit quasi numquam laborum.', '2016-9-16');
+VALUES ('f1b98028-0899-43b4-aac8-0f29f624b979',
+        'Atque vitae quod eum similique cumque reprehenderit rerum minus nihil suscipit animi in aspernatur pariatur harum fugit quasi numquam laborum.',
+        '2016-9-16');
 
 
 --- Insere partidos
@@ -6135,7 +6296,8 @@ VALUES ('b9957418-f6d0-4c83-9178-6b0975af3315', '80575645365', '39911369015',
 
 -- Insere Equipes de Apoio
 INSERT INTO Equipe_Apoio
-VALUES ('883dde1f-5898-4a09-af78-a327c3421c72', '917d9d62-6b92-4eb6-bcb4-e184642379df', 2016, 'Comunicação com o Eleitor');
+VALUES ('883dde1f-5898-4a09-af78-a327c3421c72', '917d9d62-6b92-4eb6-bcb4-e184642379df', 2016,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('d4b47ae3-e1e0-4e2e-8bbb-c6c5cfa74f80', '39d1f0f1-5459-4a78-932a-867cc5b5878c', 2014, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
@@ -6143,23 +6305,27 @@ VALUES ('e4190452-7b83-4953-a7a2-a0410b0a94b4', 'cd73e0d8-a5a0-4965-b67f-fcb9608
 INSERT INTO Equipe_Apoio
 VALUES ('e38a8b10-d849-449c-8ec2-02d36d230d23', 'cb951489-cf01-4402-98d4-c2020f79e862', 2010, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('cb80f973-7257-4411-8d2d-2ba42095bdd3', '14e004da-446a-46a4-8887-806ac81ebcad', 2014, 'Comunicação com o Eleitor');
+VALUES ('cb80f973-7257-4411-8d2d-2ba42095bdd3', '14e004da-446a-46a4-8887-806ac81ebcad', 2014,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('ad3b0c42-0627-4314-85c4-7b8d29bdb75a', '0a95979e-c07d-4277-bc04-7bacaede0ad3', 2010, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
 VALUES ('c5553153-7d3e-4cc7-84e4-43591d84d199', '4b44945c-c3f8-41eb-b673-f44cd25840ff', 2018, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('980ee312-f850-43d6-93ff-8b5bf963f636', '140c00c6-9c63-4078-8235-49de5c138138', 2016, 'Comunicação com o Eleitor');
+VALUES ('980ee312-f850-43d6-93ff-8b5bf963f636', '140c00c6-9c63-4078-8235-49de5c138138', 2016,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('f67ca040-4764-4759-97d1-60246e2bcfb5', '9cc9ac5b-b66a-4b29-858e-005244337c95', 2010, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
-VALUES ('c420a55b-837f-480e-9208-b527b95a30f5', 'fadd0750-3074-44c8-8dc6-5142a6fbcd9a', 2020, 'Comunicação com o Eleitor');
+VALUES ('c420a55b-837f-480e-9208-b527b95a30f5', 'fadd0750-3074-44c8-8dc6-5142a6fbcd9a', 2020,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('66f88b54-82f1-4b7d-8428-bc27357704b9', '0b5f8599-e968-421d-ae9d-11d271b8e9b8', 2012, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
 VALUES ('eed2ed8e-35bf-4120-bcf7-7b46a0f4d579', '30d3e491-cf0c-4b40-863d-0487d785dea4', 2014, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('1ea42961-8416-4334-b882-62feafc574b1', '6c5e83c6-2fc6-44f5-8f04-188a62645bf0', 2014, 'Comunicação com o Eleitor');
+VALUES ('1ea42961-8416-4334-b882-62feafc574b1', '6c5e83c6-2fc6-44f5-8f04-188a62645bf0', 2014,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('813e7fa6-ce75-492f-a975-36a8c7110394', '283ed392-8e7a-4feb-8873-528dfde48e17', 2018, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
@@ -6175,9 +6341,11 @@ VALUES ('95096071-49b8-41ab-97bb-9eccbe5bac34', '58b95725-63d5-4d4a-96da-cf73874
 INSERT INTO Equipe_Apoio
 VALUES ('088223cb-8981-4991-8dbe-476b081bd471', 'abdb4c55-b853-43db-8eaf-ff857af66912', 2016, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('abd68967-ba77-40d4-83a7-d6d2ae397be1', '1ddf162a-5faa-45be-bb45-17555b4df092', 2014, 'Comunicação com o Eleitor');
+VALUES ('abd68967-ba77-40d4-83a7-d6d2ae397be1', '1ddf162a-5faa-45be-bb45-17555b4df092', 2014,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
-VALUES ('e49c4f8d-1b75-4b8b-a8b2-9e98cfe839e6', '294c5d0e-6eac-4fdf-97ac-afb6002d9a7a', 2010, 'Comunicação com o Eleitor');
+VALUES ('e49c4f8d-1b75-4b8b-a8b2-9e98cfe839e6', '294c5d0e-6eac-4fdf-97ac-afb6002d9a7a', 2010,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('73c9d17a-506a-4bca-bdaf-3f9e938117e6', 'f33f011e-3f4c-4920-a003-4987a4c22e7d', 2014, 'Marketing');
 INSERT INTO Equipe_Apoio
@@ -6193,13 +6361,15 @@ VALUES ('b0bd8f57-5ed8-47d2-8b1d-d5f12c79e4dc', 'f348d10b-3674-4cb0-b490-3c2123b
 INSERT INTO Equipe_Apoio
 VALUES ('019662fc-6911-4ffd-9027-e1c65381c212', 'f6864c44-7706-41e2-8e35-f5dd0b914dcc', 2020, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('2738a0b5-57f2-416f-92fc-a6590c8e0156', '2ae7d657-c108-4134-8a5c-475019279bfe', 2010, 'Comunicação com o Eleitor');
+VALUES ('2738a0b5-57f2-416f-92fc-a6590c8e0156', '2ae7d657-c108-4134-8a5c-475019279bfe', 2010,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('6f0fef58-d623-4cb9-b26e-eb7b80e8c217', '71f474f3-cf89-4e8a-8751-430c3c8f627c', 2010, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
 VALUES ('ac80df4a-01ff-4aed-a73c-f63631b44536', '90b78a93-b0e6-4dd0-878b-26109cc8b6ab', 2016, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('ea1ec8d1-7eba-4d92-8fbe-48efe28431f6', 'f0968330-20b4-4cca-939a-c514fe8ba825', 2010, 'Comunicação com o Eleitor');
+VALUES ('ea1ec8d1-7eba-4d92-8fbe-48efe28431f6', 'f0968330-20b4-4cca-939a-c514fe8ba825', 2010,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('85f24004-f7fd-4000-acd1-0ade019d947b', '0e679ddc-8e10-4c15-bfb5-a187d79c171d', 2014, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
@@ -6213,15 +6383,18 @@ VALUES ('213baa8e-4d1b-432f-aded-3b6832553337', '8925189d-a9f3-4955-965d-c9a4748
 INSERT INTO Equipe_Apoio
 VALUES ('5b10b370-9be5-401b-84a5-2c66d84329af', '827d9967-cc68-4272-9daf-14e8089f9e76', 2012, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('85dab8c6-fb66-4405-943f-234943494bd0', '52de8a78-08c2-49d5-ba43-c390fee8f254', 2010, 'Comunicação com o Eleitor');
+VALUES ('85dab8c6-fb66-4405-943f-234943494bd0', '52de8a78-08c2-49d5-ba43-c390fee8f254', 2010,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('61638f40-1999-4dde-80ea-f02f5c256e60', '88f1117b-9324-4424-9c76-c7223602197d', 2016, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
 VALUES ('cb7e7f05-6cc9-4802-af54-e228ab26fad4', 'cd73e0d8-a5a0-4965-b67f-fcb96082944b', 2010, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
-VALUES ('22850f31-5bb8-48c6-826f-68cba23b6ba5', '154a8bdc-f43f-432d-bbb1-8603be3e2bcc', 2016, 'Comunicação com o Eleitor');
+VALUES ('22850f31-5bb8-48c6-826f-68cba23b6ba5', '154a8bdc-f43f-432d-bbb1-8603be3e2bcc', 2016,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
-VALUES ('4896abea-0e4b-4c24-bd81-e15efe9b5202', 'e2616eeb-7005-4ecc-8664-30f74a522398', 2012, 'Comunicação com o Eleitor');
+VALUES ('4896abea-0e4b-4c24-bd81-e15efe9b5202', 'e2616eeb-7005-4ecc-8664-30f74a522398', 2012,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('89f5b4d0-bc3e-4190-8f0d-f5417e0e21cd', 'fbc0eb50-4019-4da5-b2d7-161c9293706e', 2012, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
@@ -6241,33 +6414,41 @@ VALUES ('ae4d6ec0-814d-41e1-a1f0-b08aaead4aea', '00c6b060-9bac-4452-b127-39420d4
 INSERT INTO Equipe_Apoio
 VALUES ('454c88bd-7003-4f2c-907e-6322f1c49a0c', 'e58fc962-e25c-4032-9934-6e09c10fac93', 2010, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('3a8f538d-e05c-404f-b441-e0c69203dd68', '6df4504e-b88d-4f7f-b79e-b9e663c15cbf', 2010, 'Comunicação com o Eleitor');
+VALUES ('3a8f538d-e05c-404f-b441-e0c69203dd68', '6df4504e-b88d-4f7f-b79e-b9e663c15cbf', 2010,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
-VALUES ('b796b41a-ec6c-4e9d-a861-b421e109d9df', '7929ba27-8368-4c77-97b3-face01bbe78b', 2020, 'Comunicação com o Eleitor');
+VALUES ('b796b41a-ec6c-4e9d-a861-b421e109d9df', '7929ba27-8368-4c77-97b3-face01bbe78b', 2020,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('f42992db-4c57-4ad4-bf42-37396f0d77ba', '13a9fa1e-1f6b-4342-9d4e-755eea4746ae', 2016, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
 VALUES ('06921e43-c8a1-40bc-a537-5ed9c915f1d4', '01e85bac-4bed-4b58-b51b-ae77e95cac0d', 2010, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('fc5c02ef-3f61-4567-a6d3-6e2910a527a4', '69384f39-1b94-4f0b-9404-cc6f99209734', 2018, 'Comunicação com o Eleitor');
+VALUES ('fc5c02ef-3f61-4567-a6d3-6e2910a527a4', '69384f39-1b94-4f0b-9404-cc6f99209734', 2018,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
-VALUES ('5863fe9d-2717-488e-9e23-bacc564b88ce', 'de9f0e95-beac-4fd8-aa8c-ed28b4acdd75', 2018, 'Comunicação com o Eleitor');
+VALUES ('5863fe9d-2717-488e-9e23-bacc564b88ce', 'de9f0e95-beac-4fd8-aa8c-ed28b4acdd75', 2018,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('49e83525-834a-4bc7-b08a-c9061456b1a2', 'd8974770-6d0b-4e73-a175-5be80285fa4d', 2010, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
 VALUES ('cf4c46a0-d533-4934-a077-39713f20ec46', '14e004da-446a-46a4-8887-806ac81ebcad', 2016, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('87a81832-3d34-4864-8e94-d19f4d7d7cae', '4d494652-5545-4dda-9bed-aab79da8ea43', 2018, 'Comunicação com o Eleitor');
+VALUES ('87a81832-3d34-4864-8e94-d19f4d7d7cae', '4d494652-5545-4dda-9bed-aab79da8ea43', 2018,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('862c16e5-851b-4083-8e0a-c3f67188339d', 'b04d785b-ed4b-4251-9a16-89b585dbc84e', 2016, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('b2cd7158-830a-49e6-81a6-6213785d7fdd', '00c6b060-9bac-4452-b127-39420d4a97f9', 2010, 'Comunicação com o Eleitor');
+VALUES ('b2cd7158-830a-49e6-81a6-6213785d7fdd', '00c6b060-9bac-4452-b127-39420d4a97f9', 2010,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('9918b566-6aae-4840-b207-ef4bba5f97b8', '7a4ad448-53d3-4c66-826d-8a97a901a75b', 2016, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('90c7027a-8c35-4abd-b7bb-879aa21458d3', '8658829e-b5e0-4fe1-b3b2-73a5100a152f', 2012, 'Comunicação com o Eleitor');
+VALUES ('90c7027a-8c35-4abd-b7bb-879aa21458d3', '8658829e-b5e0-4fe1-b3b2-73a5100a152f', 2012,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
-VALUES ('b7e02c87-11f8-4687-babb-19fd32049f51', '8dcc3d94-22e4-449b-b282-526679f164e1', 2018, 'Comunicação com o Eleitor');
+VALUES ('b7e02c87-11f8-4687-babb-19fd32049f51', '8dcc3d94-22e4-449b-b282-526679f164e1', 2018,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('b9fd5755-c40f-480c-bff4-e96e5dbefb31', 'd1b0dede-99f8-4c51-b9de-ef7de6c0f223', 2016, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
@@ -6281,15 +6462,18 @@ VALUES ('ed2d6d75-a514-40dd-8bb3-a41b2a8ae291', '3e08ab28-65f8-4935-a018-80f6a20
 INSERT INTO Equipe_Apoio
 VALUES ('75c3d2b6-0862-4fd8-9703-e8cb672c84c9', '85bbbbe9-8850-4bea-96e1-c7bc69998342', 2014, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('4e9663f6-82d8-45e8-94bd-bac5938198e4', '04cae94e-ec38-4f04-83c6-90db81370973', 2020, 'Comunicação com o Eleitor');
+VALUES ('4e9663f6-82d8-45e8-94bd-bac5938198e4', '04cae94e-ec38-4f04-83c6-90db81370973', 2020,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
-VALUES ('65c20bb9-98b6-43b7-9557-6dc29e5cb58f', 'bccd20c5-9887-43d0-ab8f-9a99678f6bf5', 2012, 'Comunicação com o Eleitor');
+VALUES ('65c20bb9-98b6-43b7-9557-6dc29e5cb58f', 'bccd20c5-9887-43d0-ab8f-9a99678f6bf5', 2012,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('29eada49-e5a9-4c52-8e4a-39b710ba4ac6', 'd590c3bc-a0e7-4e14-9603-734290d855d6', 2020, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
 VALUES ('8703a49a-0644-40fd-a423-c59c5f515f77', '42e009cf-1cee-44e3-b3a4-e48e6d9d4aea', 2012, 'Apoiar Movimentos');
 INSERT INTO Equipe_Apoio
-VALUES ('a585e09f-bad4-40ee-9c6f-9fc8b60e5afc', 'de9f0e95-beac-4fd8-aa8c-ed28b4acdd75', 2018, 'Comunicação com o Eleitor');
+VALUES ('a585e09f-bad4-40ee-9c6f-9fc8b60e5afc', 'de9f0e95-beac-4fd8-aa8c-ed28b4acdd75', 2018,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('b52bb575-a975-4e4c-a26b-e3295fc3905f', 'df8062eb-aa44-4306-91d5-42380c0ed1dd', 2014, 'Arrecador Fundos');
 INSERT INTO Equipe_Apoio
@@ -6303,17 +6487,21 @@ VALUES ('5014c0a3-c1e2-4c31-b201-3691d1da8216', 'be66fcc2-9a7a-4994-97db-d31b136
 INSERT INTO Equipe_Apoio
 VALUES ('911012ce-07b3-4793-8443-b9307d490f85', 'ebb36ef1-07a5-4104-83bd-68ce97ba041f', 2020, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('6fbb0c02-df96-4dff-8ef4-3865781bed0c', '3b3d1e33-a62b-431c-a761-c24e8cf602e3', 2012, 'Comunicação com o Eleitor');
+VALUES ('6fbb0c02-df96-4dff-8ef4-3865781bed0c', '3b3d1e33-a62b-431c-a761-c24e8cf602e3', 2012,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('e2c22394-e0b8-4d70-a25d-31f106cdd084', '3d838daf-b50f-434d-8a4d-733ac960fc56', 2018, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('c3c49906-a4e1-4007-83fb-1fcf86eb98d3', 'b04d785b-ed4b-4251-9a16-89b585dbc84e', 2010, 'Comunicação com o Eleitor');
+VALUES ('c3c49906-a4e1-4007-83fb-1fcf86eb98d3', 'b04d785b-ed4b-4251-9a16-89b585dbc84e', 2010,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('e3f842a5-e5c0-4e23-b907-6227186a52ab', 'f0968330-20b4-4cca-939a-c514fe8ba825', 2014, 'Marketing');
 INSERT INTO Equipe_Apoio
-VALUES ('c9b9cdb5-24ce-47c2-8084-94179c0ad109', 'f33f011e-3f4c-4920-a003-4987a4c22e7d', 2014, 'Comunicação com o Eleitor');
+VALUES ('c9b9cdb5-24ce-47c2-8084-94179c0ad109', 'f33f011e-3f4c-4920-a003-4987a4c22e7d', 2014,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
-VALUES ('52bb2f46-2d2d-4b15-8730-dd4c9b3e56c5', '3b4adc40-133e-4268-b397-0d58f9796cbe', 2014, 'Comunicação com o Eleitor');
+VALUES ('52bb2f46-2d2d-4b15-8730-dd4c9b3e56c5', '3b4adc40-133e-4268-b397-0d58f9796cbe', 2014,
+        'Comunicação com o Eleitor');
 INSERT INTO Equipe_Apoio
 VALUES ('a6fa3e73-3b3d-47b6-8fa4-a6409c01240a', '55897dfb-60be-4a72-9090-b5e285526d40', 2012, 'Marketing');
 INSERT INTO Equipe_Apoio

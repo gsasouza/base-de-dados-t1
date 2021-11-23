@@ -39,7 +39,7 @@ const columns: readonly HeadCell<Data>[] = [
     id: 'delete',
     label: 'Deletar',
     action: async (row: Data) => {
-      await deleteRow({ table: 'Apoiador_campanha', property: 'id_equipe_apoio', value: row.id_equipe_apoio })
+      await deleteRow({ table: 'Apoiador_campanha', property: 'id_equipe_apoio', value: row.id_equipe_apoio, property2: 'cpf_apoiador', value2: row.cpf_apoiador })
       Router.reload()
     },
   },

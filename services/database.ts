@@ -46,8 +46,7 @@ type DeleteArgs = {
 }
 
 export const deleteRowFromDatabase = async ({ table, property, value, property2, value2 }: DeleteArgs) => {
-  const and = property2 ? `
-}AND ${property2} = '${value2}'` : '';
+  const and = property2 ? `AND ${property2} = '${value2}'` : '';
   return db.none(`DELETE
                   FROM ${table}
                   WHERE ${property} = '${value}' ${and};`)
