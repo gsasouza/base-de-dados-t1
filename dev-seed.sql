@@ -347,7 +347,7 @@ OR REPLACE FUNCTION valida_doador_documento() RETURNS trigger AS
 $valida_doador_documento$
 BEGIN
     IF
-(NEW.CPF IS NOT NULL AND NEW.CNPJ IS NOT NULL) THEN
+(NEW.CPF IS NULL AND NEW.CNPJ IS NULL) THEN
         RAISE EXCEPTION 'Um doador deve ser uma empresa ou um indivíduo';
 END IF;
 
